@@ -14,7 +14,7 @@ class Converter {
      * Takes member-like query and returns a guild member.
      * Checking goes in the following order: ID > Mention > User Tag > Nickname > Username
      * @param {CommandContext} ctx Command context, needed to get members and guilds.
-     * @param {string} query
+     * @param {string} q
      */
     memberConverter(ctx, q) {
         if (!ctx.guild) throw new Error("No guild found in context.")
@@ -29,7 +29,7 @@ class Converter {
      * Takes user-like query and returns a user in client cache.
      * Checking goes in the following order: ID > Mention > User Tag > Username
      * @param {CommandContext} ctx Command context, needed to get bot client.
-     * @param {string} query
+     * @param {string} q
      */
     userConverter(ctx, q) {
         if (q.match(idRegex)) return ctx.bot.users.find(u => q === u.id)
@@ -42,7 +42,7 @@ class Converter {
      * Takes channel-like query and returns a user in client cache.
      * Checking goes in the following order: ID > Mention > Name 
      * @param {CommandContext} ctx Command context, needed to get guild channels.
-     * @param {string} query
+     * @param {string} q
      */
     channelConverter(ctx, q) {
         if (q.match(idRegex)) return ctx.guild.channels.find(c => q === c.id)
