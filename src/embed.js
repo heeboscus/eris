@@ -1,5 +1,6 @@
 class Embed {
-    constructor(opts) {
+    constructor(opts=undefined) {
+        if (!opts) opts = {}
         const { title, description, author, url, color, timestamp, fields } = opts
         this.data = {
             embed: {

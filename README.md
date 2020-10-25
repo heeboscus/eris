@@ -13,4 +13,6 @@ bot.addCommand(
         ctx.send(`Hi ${ctx.author.username}`)
     })
 )
+
+bot.connect()
 ```

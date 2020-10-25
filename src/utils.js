@@ -8,6 +8,6 @@ module.exports = {
         const minutes = Math.floor(distance / 60000)
         distance -= minutes * 60000
         const seconds = Math.floor(distance / 1000)
-        return `${days}d ${hours}h ${(minutes)}m ${seconds}s`
+        return `${days}d ${hours}h ${minutes}m ${seconds}s`
     }
 }

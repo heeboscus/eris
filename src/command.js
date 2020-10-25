@@ -4,7 +4,7 @@
 class Command {
     /**
      * Creates a command object.
-     * @param {{name: string, exec?: Function, description?: string, args: {name: string, type: ("str"|"num"), required?: boolean, useRest?: boolean}[], aliases?: string[], hidden?: boolean, checks?: Function[], cooldown?: number, guildOnly?: boolean, path?: string, category?: string}} opts Command options.
+     * @param {{name: string, exec?: Function, description?: string, args: {name: string, type: ("str"|"num"|"member"|"user"), required?: boolean, useRest?: boolean}[], aliases?: string[], hidden?: boolean, checks?: Function[], cooldown?: number, guildOnly?: boolean, path?: string, category?: string}} opts Command options.
      */
     constructor(opts) {
         const { name, exec, description, args, aliases, hidden, checks, cooldown, guildOnly, path, category } = opts
@@ -27,7 +27,7 @@ class Command {
         this.description = description
         /**
          * The arguments the user needs to put in.
-         * @type {{name: string, type: ("str"|"num"), required?: boolean, useRest?: boolean}[]}
+         * @type {{name: string, type: ("str"|"num"|"member"|"user"), required?: boolean, useRest?: boolean}[]}
          */
         this.args = args
         /**

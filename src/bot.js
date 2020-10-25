@@ -1,6 +1,7 @@
 const Eris = require("eris")
 const CommandContext = require("./context.js")
 const Command = require("./command.js")
+const Converter = require("./converter.js")
 
 /**
 * Hibiscus Client.
@@ -34,9 +35,6 @@ class Bot extends Eris.Client {
             ownerID: ownerID || ''
         }
         if (!prefix || prefix === [] || prefix === "") throw new Error("Empty Prefix Caught.")
-        /**
-         * @type {Map<string, Command>}
-         */
         this.commands = new Map()
         this.categories = new Map()
         this.cooldowns = new Map()
@@ -91,52 +89,49 @@ class Bot extends Eris.Client {
         let command = this.getCommand(name)
         if (!command || command.length === 0) return
         const cmd = command instanceof Array ? command[0] : command
-        const timer = Number(new Date())
         let ctx = new CommandContext(msg, this, cmd, {}, prefix)
-        this.emit("beforeCommandExecute", ctx)
-        const checkArgs = () => {
-            try {
-                if (!cmd.args) return {}
-                const properArgs = {}
-                let requiredArgs = new Array(cmd.args).reduce((a, c) => a + c.required ? 1 : 0, 0)
-                if(args.length < requiredArgs) throw new Error("") 
-                if(args.length > cmd.args.length && !cmd.args[cmd.args.length - 1].useRest) throw new Error("") 
-                for (let i = 0; i < cmd.args.length; i++) {
-                    let argg
-                    let argument = cmd.args[i]
-                    if (argument.useRest) {
-                        argg = args.slice(i).join(" ")
-                        properArgs[argument.name] = argg
-                        break
-                    }
-                    if (argument.type === "str") argg = String(args[i])
-                    else if (argument.type === "num") argg = Number(args[i])
-                    /* TODO: Return to this
-                    else if (argument.type === "member") {
-                        if (!ctx.guild) throw new Error("Cannot retrieve member. No guild.")
-                        this.searchGuildMembers(msg.guildID, String(argg[i]), 1).then(m => {
-                        try {argg = m[0]}
-                        catch {throw new Error('No Member Found')}
-                    })}*/
-                    else {
-                        if (argument.default && !argument.required) argg = argument.default
-                        else throw new Error("Missing default argument")
-                    }
-                
-                    if (Number.isNaN(argg) || argg === "" || argg === "undefined") throw new Error()
-                    properArgs[argument.name] = argg
-                }
-                ctx.args = properArgs
-            }
-            catch (e) {
-                let err = {...Object.getOwnPropertyDescriptors(e), type: "INVALIDARGS"}
-                console.error(e)
-                return this.emit("commandError", ctx, err)
-            }
-        }
-        checkArgs()
         if (cmd.guildOnly && !msg.guildID) {
-            let err = {...Object.getOwnPropertyDescriptors(new Error("Guild only command missing guild.")), type: "NOGUILD"}
+            let err = {...Object.getOwnPropertyDescriptors(new Error("Guild only command missing guild.")), id: "NOGUILD"}
+            return this.emit("commandError", ctx, err)
+        }
+        const timer = Number(new Date())
+        this.emit("beforeCommandExecute", ctx)
+        try {
+            if (!cmd.args) return {}
+            const properArgs = {}
+            let requiredArgs = new Array(cmd.args).reduce((a, c) => a + c.required ? 1 : 0, 0)
+            if (args.length < requiredArgs) throw new Error("") 
+            if (args.length > cmd.args.length && !cmd.args[cmd.args.length - 1].useRest) throw new Error("") 
+            for (let i = 0; i < cmd.args.length; i++) {
+                let argg, argument = cmd.args[i], toUse = argument.useRest ? args.slice(i).join(" ") : args[i]
+                switch(argument.type) {
+                    case "str" || undefined:
+                        argg = String(toUse)
+                        break
+                    case "num":
+                        argg = Number(toUse)
+                        break
+                    case "member":
+                        try {argg = Converter.prototype.memberConverter(ctx, toUse)}
+                        catch {argg = undefined}
+                        break
+                    case "user":
+                        try {argg = Converter.prototype.userConverter(ctx, toUse)}
+                        catch {argg = undefined}
+                        break
+                    case "channel":
+                        try {argg = Converter.prototype.channelConverter(ctx, toUse)}
+                        catch {argg = undefined}
+                }
+                if (argument.required && (Number.isNaN(argg) || argg === "" || argg === "undefined" || ((argument.type === "member" || argument.type === "user") && !argg))) throw new Error("Undefined Argument")
+                properArgs[argument.name] = argg
+                if (argument.useRest) break
+            }
+            ctx.args = properArgs
+        }
+        catch (e) {
+            let err = {...Object.getOwnPropertyDescriptors(e), id: "INVALIDARGS"}
+            console.error(e)
             return this.emit("commandError", ctx, err)
         }
         if (cmd.category) {
@@ -147,7 +142,7 @@ class Bot extends Eris.Client {
                         if (!check.exec(msg)) throw check.error
                     }
                     catch (e) {
-                        let err = {...e, type: "CHECKFAILURE"}
+                        let err = {...e, id: "CHECKFAILURE"}
                         return this.emit("commandError", ctx, err)
                     }
                 }
@@ -159,7 +154,7 @@ class Bot extends Eris.Client {
                     if (!check.exec(msg)) throw check.error
                 }
                 catch(e) {
-                    let err = {...e, type: "CHECKFAILURE"}
+                    let err = {...e, id: "CHECKFAILURE"}
                     return this.emit("commandError", ctx, err)
                 } 
             }
@@ -178,7 +173,6 @@ class Bot extends Eris.Client {
                         const left = (expires - now) / 1000
                         return this.emit("commandCooldown", ctx, left)
                     }
-
                 }
                 times.set(msg.author.id, new Date())
                 setTimeout(() => times.delete(msg.author.id), cmd.cooldown)
@@ -235,6 +229,9 @@ class Bot extends Eris.Client {
     addCommand(cmd) { 
         let check = this.getCommand(cmd.name)
         if (!(check.length === 0)) throw new Error("Command name/alias has already been registed.")
+        if (cmd.aliases) {
+            if (new Set(cmd.aliases).size !== cmd.aliases.length) throw new Error("Command aliases already registered.")
+        }
         this.commands.set(cmd.name, cmd)
         if (cmd.cooldown) this.cooldowns.set(cmd.name, new Map())
     }

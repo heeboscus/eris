@@ -1,5 +1,5 @@
 
-const { Message, TextChannel: { prototype: { createMessage } }, User, Channel, Guild } = require("eris")
+const { Message, TextChannel: { prototype: { createMessage } }, User, Channel, Guild, Member } = require("eris")
 
 const Bot = require("./bot.js")
 const Command = require("./command.js")
@@ -48,9 +48,10 @@ class CommandContext {
         this.send = message.channel.createMessage.bind(message.channel)
         /**
          * The user that invoked the command.
-         * @type {User} 
+         * @type {User|Member} 
          */
-        this.author = message.author
+        this.author = message.guildID ? message.channel.guild.members.find(m => message.author.id === m.id) : message.author
+        // this.author.prototype.tag = `${message.author.username}#${message.author.discriminator}`
         /**
          * The channel that the command was invoked in.
          * @type {Channel}
@@ -60,7 +61,7 @@ class CommandContext {
          * The guild that the command was invoked in (if any).
          * @type {Guild}
          */
-        /*message.guildID ? bot.getRESTGuild(message.guildID).then((guild) => {this.guild = guild}) : this.guild = undefined*/
+        this.guild = message.guildID ? message.channel.guild : undefined
     }
 }
 
