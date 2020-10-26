@@ -1,6 +1,6 @@
 
 const category = require('./src/category.js')
-
+const checks = require("./src/checks.js")
 const command = require('./src/command.js')
 const embed = require('./src/embed.js')
 const utils = require('./src/utils.js')
@@ -29,6 +29,7 @@ const whenMentionedOr = function(basePrefix) {
 module.exports = {
     Bot: bot, 
     Command: command,
+    Checks: checks,
     Category: category,
     Utils: utils,
     Embed: embed, 

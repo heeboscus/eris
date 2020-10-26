@@ -94,6 +94,31 @@ class Bot extends Eris.Client {
             let err = {...Object.getOwnPropertyDescriptors(new Error("Guild only command missing guild.")), id: "NOGUILD"}
             return this.emit("commandError", ctx, err)
         }
+        if (cmd.category) {
+            const checks = this.getCategory(cmd.category).globalChecks
+            if (checks) {
+                for (let check of checks) {
+                    try {
+                        if (!check(ctx)) throw new Error("Check failed.")
+                    }
+                    catch (e) {
+                        let err = {...e, id: "CHECKFAILURE"}
+                        return this.emit("commandError", ctx, err)
+                    }
+                }
+            }
+        }
+        if (cmd.checks.length) {
+            for (let check of cmd.checks) {
+                try {
+                    if (!check(ctx)) throw new Error(check.name)
+                }
+                catch(e) {
+                    let err = {...e, id: "CHECKFAILURE"}
+                    return this.emit("commandError", ctx, err)
+                } 
+            }
+        }
         const timer = Number(new Date())
         this.emit("beforeCommandExecute", ctx)
         try {
@@ -133,31 +158,6 @@ class Bot extends Eris.Client {
             let err = {...Object.getOwnPropertyDescriptors(e), id: "INVALIDARGS"}
             console.error(e)
             return this.emit("commandError", ctx, err)
-        }
-        if (cmd.category) {
-            const checks = this.getCategory(cmd.category).globalChecks
-            if (checks) {
-                for (let check of checks) {
-                    try {
-                        if (!check.exec(msg)) throw check.error
-                    }
-                    catch (e) {
-                        let err = {...e, id: "CHECKFAILURE"}
-                        return this.emit("commandError", ctx, err)
-                    }
-                }
-            }
-        }
-        if (cmd.checks && Boolean(cmd.checks.length)) {
-            for (let check of cmd.checks) {
-                try {
-                    if (!check.exec(msg)) throw check.error
-                }
-                catch(e) {
-                    let err = {...e, id: "CHECKFAILURE"}
-                    return this.emit("commandError", ctx, err)
-                } 
-            }
         }
         try {
             if (cmd.cooldown) {
@@ -272,7 +272,7 @@ class Bot extends Eris.Client {
         .setArgs([{name: "cm", type: "str"}])
         .setExec(async function(ctx) { 
             let cats
-            if (!ctx.args.cm) {
+            if (!ctx.args.cm||ctx.args.cm==="undefined") {
                 let non = Array.from(this.commands.values()).filter((command) => !command.category) 
                 cats = Array.from(this.categories.values()).map((x) => `> ${x.name} (${x.commands.length} Command${x.commands.length === 1 ? "" : 's'})`)
                 if (non.length) cats.push(`> no-category (${non.length} Command${non.length === 1 ? "" : 's'})`)

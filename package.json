@@ -1,6 +1,6 @@
 {
   "name": "@skullbite/hibiscus",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "Command Handler for Eris",
   "main": "index.js",
   "scripts": {
@@ -15,5 +15,13 @@
   "keywords": [
     "discord",
     "eris"
-  ]
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hibiscus-discord/hibiscus.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hibiscus-discord/hibiscus/issues"
+  },
+  "homepage": "https://github.com/hibiscus-discord/hibiscus#readme"
 }

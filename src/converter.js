@@ -17,13 +17,16 @@ class Converter {
      * @param {string} q
      */
     memberConverter(ctx, q) {
+        let mem
         if (!ctx.guild) throw new Error("No guild found in context.")
-        if (q.match(idRegex)) return ctx.guild.members.find(m => q === m.id)
-        if (q.match(mentionRegex)) return ctx.guild.members.find(m => Boolean(q.match(new RegExp(`<@!?${m.id}>$`))))
-        if (q.match(tagRegex)) return ctx.guild.members.find(m => q === `${m.username}#${m.discriminator}`)
-        if (q.match(nickRegex)) return ctx.guild.members.find(m => m.nick && q === m.nick)
-        if (q.match(nameRegex)) return ctx.guild.members.find(m => q === m.username)
-        return undefined
+        if (q.match(idRegex)) mem = ctx.guild.members.find(m => q === m.id)
+        else if (q.match(mentionRegex)) mem = ctx.guild.members.find(m => Boolean(q.match(new RegExp(`<@!?${m.id}>$`))))
+        else if (q.match(tagRegex)) mem = ctx.guild.members.find(m => q === `${m.username}#${m.discriminator}`)
+        else if (q.match(nickRegex)) mem = ctx.guild.members.find(m => m.nick && q === m.nick)
+        else if (q.match(nameRegex)) mem = ctx.guild.members.find(m => q === m.username)
+        else mem = undefined
+        mem ? mem.tag = `${mem.username}#${mem.discriminator}` : {}
+        return mem
     }
     /**
      * Takes user-like query and returns a user in client cache.
@@ -32,11 +35,14 @@ class Converter {
      * @param {string} q
      */
     userConverter(ctx, q) {
-        if (q.match(idRegex)) return ctx.bot.users.find(u => q === u.id)
-        if (q.match(mentionRegex)) return ctx.bot.users.find(u => Boolean(q.match(new RegExp(`<@!?${u.id}>`))))
-        if (q.match(tagRegex)) return ctx.bot.users.find(u => q === `${u.username}#${u.discriminator}`)
-        if (q.match(nameRegex)) return ctx.bot.users.find(u => q === u.username)
-        return undefined
+        let user
+        if (q.match(idRegex)) user = ctx.bot.users.find(u => q === u.id)
+        else if (q.match(mentionRegex)) user = ctx.bot.users.find(u => Boolean(q.match(new RegExp(`<@!?${u.id}>`))))
+        else if (q.match(tagRegex)) user = ctx.bot.users.find(u => q === `${u.username}#${u.discriminator}`)
+        else if (q.match(nameRegex)) user = ctx.bot.users.find(u => q === u.username)
+        else user = undefined
+        user ? user.tag = `${user.username}#${user.discriminator}` : {}
+        return user
     }
     /**
      * Takes channel-like query and returns a user in client cache.
