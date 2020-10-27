@@ -5,6 +5,7 @@ const command = require('./src/command.js')
 const embed = require('./src/embed.js')
 const utils = require('./src/utils.js')
 const bot = require('./src/bot.js')
+const { version } = require('./package.json')
 
 function escapeRegex(str) {
     return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
@@ -34,6 +35,7 @@ module.exports = {
     Utils: utils,
     Embed: embed, 
     whenMentioned: whenMentioned, 
-    whenMentionedOr: whenMentionedOr
+    whenMentionedOr: whenMentionedOr,
+    version: version
 }
 
