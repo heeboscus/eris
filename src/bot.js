@@ -2,6 +2,7 @@ const Eris = require("eris")
 const CommandContext = require("./context.js")
 const Command = require("./command.js")
 const Converter = require("./converter.js")
+const { MessageCollector, ReactionCollector } = require("eris-collector")
 
 /**
 * Hibiscus Client.
@@ -121,44 +122,47 @@ class Bot extends Eris.Client {
         }
         const timer = Number(new Date())
         this.emit("beforeCommandExecute", ctx)
-        try {
-            if (!cmd.args) return {}
-            const properArgs = {}
-            let requiredArgs = new Array(cmd.args).reduce((a, c) => a + c.required ? 1 : 0, 0)
-            if (args.length < requiredArgs) throw new Error("") 
-            if (args.length > cmd.args.length && !cmd.args[cmd.args.length - 1].useRest) throw new Error("") 
-            for (let i = 0; i < cmd.args.length; i++) {
-                let argg, argument = cmd.args[i], toUse = argument.useRest ? args.slice(i).join(" ") : args[i]
-                switch(argument.type) {
-                    case "str" || undefined:
-                        argg = String(toUse)
-                        break
-                    case "num":
-                        argg = Number(toUse)
-                        break
-                    case "member":
-                        try {argg = Converter.prototype.memberConverter(ctx, toUse)}
-                        catch {argg = undefined}
-                        break
-                    case "user":
-                        try {argg = Converter.prototype.userConverter(ctx, toUse)}
-                        catch {argg = undefined}
-                        break
-                    case "channel":
-                        try {argg = Converter.prototype.channelConverter(ctx, toUse)}
-                        catch {argg = undefined}
+        let checkArgs = () => {
+            try {
+                if (!cmd.args) return {}
+                const properArgs = {}
+                let requiredArgs = new Array(cmd.args).reduce((a, c) => a + c.required ? 1 : 0, 0)
+                if (args.length < requiredArgs) throw new Error("") 
+                if (args.length > cmd.args.length && !cmd.args[cmd.args.length - 1].useRest) throw new Error("") 
+                for (let i = 0; i < cmd.args.length; i++) {
+                    let argg, argument = cmd.args[i], toUse = argument.useRest ? args.slice(i).join(" ") : args[i]
+                    switch(argument.type) {
+                        case "str" || undefined:
+                            argg = String(toUse)
+                            break
+                        case "num":
+                            argg = Number(toUse)
+                            break
+                        case "member":
+                            try {argg = Converter.prototype.memberConverter(ctx, toUse)}
+                            catch {argg = undefined}
+                            break
+                        case "user":
+                            try {argg = Converter.prototype.userConverter(ctx, toUse)}
+                            catch {argg = undefined}
+                            break
+                        case "channel":
+                            try {argg = Converter.prototype.channelConverter(ctx, toUse)}
+                            catch {argg = undefined}
+                    }
+                    if (argument.required && (Number.isNaN(argg) || argg === "" || argg === "undefined" || ((argument.type === "member" || argument.type === "user") && !argg))) throw new Error("Undefined Argument")
+                    properArgs[argument.name] = argg
+                    if (argument.useRest) break
                 }
-                if (argument.required && (Number.isNaN(argg) || argg === "" || argg === "undefined" || ((argument.type === "member" || argument.type === "user") && !argg))) throw new Error("Undefined Argument")
-                properArgs[argument.name] = argg
-                if (argument.useRest) break
+                ctx.args = properArgs
             }
-            ctx.args = properArgs
+            catch (e) {
+                let err = {...Object.getOwnPropertyDescriptors(e), id: "INVALIDARGS"}
+                console.error(e)
+                return this.emit("commandError", ctx, err)
+            }
         }
-        catch (e) {
-            let err = {...Object.getOwnPropertyDescriptors(e), id: "INVALIDARGS"}
-            console.error(e)
-            return this.emit("commandError", ctx, err)
-        }
+        checkArgs()
         try {
             if (cmd.cooldown) {
                 let times = this.cooldowns.get(cmd.name)
@@ -192,6 +196,24 @@ class Bot extends Eris.Client {
             this.emit("commandError", ctx, err)
         }
     }
+    /* paginator(msg, opts) {
+        if (!opts) opts = {
+            type: "reaction",
+            time: 1000*40,
+            authorOnly: true
+        }
+        if (msg.author.id !== this.bot.user.id) throw new Error("Any message intended to be paginated can only be sent from the client.")
+        let filter, c
+        if (opts.type === "reaction") {
+
+            let emojiList = ["◀", "⏹", "▶"]
+            if ()
+            emojiList.forEach(a => )
+            filter = (m, emoji, userID) => emojiList.includes(emoji.name) && opts.authorOnly ? userID === m.author.id : true
+            c = new ReactionCollector(this, msg)
+        }
+
+    } */
     getHelp(ctx, command=undefined) {
         let usageStr, argList = new Array(), cmd
         cmd = command ? command : ctx.command
