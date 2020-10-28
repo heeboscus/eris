@@ -54,7 +54,7 @@ declare namespace Hibiscus {
         message: Eris.Message;
         bot: Bot;
         command: Command;
-        args: any;
+        args: {[s: string]: any};
         prefix: string;
         send: Eris.TextChannel.send;
         author: Eris.Member | Eris.User;
@@ -74,12 +74,7 @@ declare namespace Hibiscus {
         name: string;
         exec: F;
         description?: string;
-        args?: {
-            name: string;
-            type: "str" | "num" | "member" | "user";
-            required?: boolean;
-            useRest?: boolean;
-        }[];
+        args?: ArgType;
         aliases?: string[];
         hidden?: boolean;
         checks: F[];
