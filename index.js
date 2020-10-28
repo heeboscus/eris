@@ -1,4 +1,3 @@
-
 const category = require('./src/category.js');
 const checks = require("./src/checks.js");
 const command = require('./src/command.js');
@@ -6,7 +5,8 @@ const embed = require('./src/embed.js');
 const utils = require('./src/utils.js');
 const bot = require('./src/bot.js');
 const { version } = require('./package.json');
-
+// don't need to do anything with it
+require("./src/MonkeyPatch");
 
 function escapeRegex(str) {
     return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');

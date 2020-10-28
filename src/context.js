@@ -41,16 +41,10 @@ class CommandContext {
          */
         this.prefix = prefix;
         /**
-         * Sends a message to the channel that the command was invoked in. Shorthand for `message.channel.createMessage`.
-         * @type {createMessage} 
-         */
-        this.send = message.channel.createMessage.bind(message.channel);
-        /**
-         * The user that invoked the command.
-         * @type {User|Member} 
-         */
+          * The user that invoked the command.
+          * @type {User|Member} 
+          */
         this.author = message.guildID ? message.channel.guild.members.find(m => message.author.id === m.id) : message.author;
-        this.author.tag = `${message.author.username}#${message.author.discriminator}`;
         /**
          * The channel that the command was invoked in.
          * @type {Channel}
@@ -61,7 +55,6 @@ class CommandContext {
          * @type {Guild}
          */
         this.guild = message.guildID ? message.channel.guild : undefined;
-        this.guild ? this.guild.me = this.guild.members.find(m => bot.user.id === m.id) : {};
     }
 }
 
