@@ -33,7 +33,6 @@ class CommandContext {
         this.command = command
         /**
          * The arguments applied in the command.
-         * @type {{name: any}[]}
          */
         this.args = args
         /**

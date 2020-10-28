@@ -36,6 +36,7 @@ class Bot extends Eris.Client {
             ownerID: ownerID || ''
         }
         if (!prefix || prefix === [] || prefix === "") throw new Error("Empty Prefix Caught.")
+        // TODO: migrate to eris collection
         this.commands = new Map()
         this.categories = new Map()
         this.cooldowns = new Map()
@@ -229,7 +230,7 @@ class Bot extends Eris.Client {
         category.commands.map(cmd => this.addCommand(cmd))
         this.categories.set(category.name, category)
     }
-    unloadCategory (name) {
+    unloadCategory(name) {
         const category = this.getCategory(name)
         if (!category) return
         category.commands.map(a => {
@@ -281,7 +282,7 @@ class Bot extends Eris.Client {
         }
     }
     getCommand(q) {return this.commands.get(q) || Array.from(this.commands.values()).filter((command) => command.aliases && command.aliases.includes(q))}
-    loadEvent(path) {
+    loadEvent(name, path) {
         const event = require(path)
         if (!event) throw new Error("No event found.") 
         this.on(name, event.bind(this))

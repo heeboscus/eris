@@ -7,6 +7,7 @@ const utils = require('./src/utils.js')
 const bot = require('./src/bot.js')
 const { version } = require('./package.json')
 
+
 function escapeRegex(str) {
     return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 }
@@ -23,19 +24,16 @@ const whenMentionedOr = function(basePrefix) {
     return f
 }
 
-/**
- * @description uwu
- * @namespace Hibiscus
- */
-module.exports = {
-    Bot: bot, 
-    Command: command,
-    Checks: checks,
-    Category: category,
-    Utils: utils,
-    Embed: embed, 
-    whenMentioned: whenMentioned, 
-    whenMentionedOr: whenMentionedOr,
-    version: version
-}
+
+const Hibiscus = {}
+Hibiscus.Bot = bot
+Hibiscus.Category = category
+Hibiscus.Checks = checks
+Hibiscus.Command = command
+Hibiscus.Utils = utils
+Hibiscus.Embed = embed
+Hibiscus.whenMentioned = whenMentioned
+Hibiscus.whenMentionedOr = whenMentionedOr
+Hibiscus.VERSION = version
+module.exports = Hibiscus
 
