@@ -1,12 +1,13 @@
 const category = require('./src/category.js')
-const checks = require("./src/checks.js")
+const checks = require('./src/checks.js')
+const context = require('./src/context.js')
 const command = require('./src/command.js')
 const embed = require('./src/embed.js')
 const utils = require('./src/utils.js')
 const bot = require('./src/bot.js')
+const errors = require("./src/errors.js")
 const { version } = require('./package.json')
-// don't need to do anything with it
-require("./src/MonkeyPatch")
+// require("./src/MonkeyPatch")
 
 function escapeRegex(str) {
     return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
@@ -27,11 +28,13 @@ const whenMentionedOr = function (basePrefix) {
 
 const Hibiscus = {}
 Hibiscus.Bot = bot
+Hibiscus.CommandContext = context
 Hibiscus.Category = category
 Hibiscus.Checks = checks
 Hibiscus.Command = command
 Hibiscus.Utils = utils
 Hibiscus.Embed = embed
+Hibiscus.Errors = errors
 Hibiscus.whenMentioned = whenMentioned
 Hibiscus.whenMentionedOr = whenMentionedOr
 Hibiscus.VERSION = version

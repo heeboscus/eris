@@ -2,6 +2,7 @@ const Eris = require("eris")
 const CommandContext = require("./context.js")
 const Command = require("./command.js")
 const Converter = require("./converter.js")
+const Errors = require("./errors")
 const { MessageCollector, ReactionCollector } = require("eris-collector")
 
 /**
@@ -36,7 +37,7 @@ class Bot extends Eris.Client {
             ownerID: ownerID || ''
         }
         if (!prefix || prefix === [] || prefix === "") throw new Error("Empty Prefix Caught.")
-        // TODO: migrate to eris collection
+        // TODO: migrate to Eris.Collection
         this.commands = new Map()
         this.categories = new Map()
         this.cooldowns = new Map()
@@ -77,7 +78,6 @@ class Bot extends Eris.Client {
                         break
                     default:
                         throw new Error(`Prefix function output must be string or object (array). Not ${typeof pre}.`)
-
                 }
             default:
                 throw new Error(`Prefix must be string, object (array) or function. Not ${typeof this.commandOptions.prefix}`)
@@ -93,19 +93,48 @@ class Bot extends Eris.Client {
         const cmd = command instanceof Array ? command[0] : command
         let ctx = new CommandContext(msg, this, cmd, {}, prefix)
         if (cmd.guildOnly && !msg.guildID) {
-            let err = { ...Object.getOwnPropertyDescriptors(new Error("Guild only command missing guild.")), id: "NOGUILD" }
+            let err = new Errors.NoPrivate
             return this.emit("commandError", ctx, err)
+        }
+        if (cmd.neededBotPerms) {
+            if (ctx.guild) {
+                let missingBotPerms = []
+                try {
+                    for (let i = 0; i < cmd.neededBotPerms; i++) {
+                        if (!ctx.guild.me.permission.has(cmd.neededBotPerms[i])) throw new Errors.MissingBotPerms
+                    }
+                }
+                catch (e) {
+                    return this.emit("commandError", ctx, e)
+                }   
+            }
+        }
+        if (cmd.neededMemberPerms) {
+            if (ctx.guild) {
+                let missingMemberPerms = []
+                try {
+                    for (let i = 0; i < cmd.neededMemberPerms; i++) {
+                        if (!ctx.author.permission.has(cmd.neededUserPerms[i])) throw new Errors.MissingMemberPerms
+                    }
+                }
+                catch (e) {
+                    return this.emit("commandError", ctx, e)
+                }
+            }
         }
         if (cmd.category) {
             const checks = this.getCategory(cmd.category).globalChecks
             if (checks) {
                 for (let check of checks) {
                     try {
-                        if (!check(ctx)) throw new Error("Check failed.")
+                        if (!check) throw new TypeError(`Check must be a function. Not ${typeof check}.`)
+                        let res
+                        if (check.constructor.name === "AsyncFunction") res = await check(ctx)
+                        else res = check(ctx)
+                        if (!res) throw new Errors.CheckFailure(check.name)
                     }
                     catch (e) {
-                        let err = { ...e, id: "CHECKFAILURE" }
-                        return this.emit("commandError", ctx, err)
+                        return this.emit("commandError", ctx, e)
                     }
                 }
             }
@@ -113,94 +142,90 @@ class Bot extends Eris.Client {
         if (cmd.checks.length) {
             for (let check of cmd.checks) {
                 try {
-                    if (!check(ctx)) throw new Error(check.name)
+                    if (!check) throw new TypeError(`Check must be a function. Not ${typeof check}.`)
+                    let res
+                    if (check.constructor.name === "AsyncFunction") res = await check(ctx)
+                    else res = check(ctx)
+                    if (!res) throw new Errors.CheckFailure(check.name)
                 }
                 catch (e) {
-                    let err = { ...e, id: "CHECKFAILURE" }
-                    return this.emit("commandError", ctx, err)
+                    return this.emit("commandError", ctx, e)
                 }
             }
         }
         const timer = Number(new Date())
         this.emit("beforeCommandExecute", ctx)
         let checkArgs = () => {
-            try {
-                if (!cmd.args) return {}
-                const properArgs = {}
-                let requiredArgs = new Array(cmd.args).reduce((a, c) => a + c.required ? 1 : 0, 0)
-                if (args.length < requiredArgs) throw new Error("")
-                if (args.length > cmd.args.length && !cmd.args[cmd.args.length - 1].useRest) throw new Error("")
-                for (let i = 0; i < cmd.args.length; i++) {
-                    let argg, argument = cmd.args[i], toUse = argument.useRest ? args.slice(i).join(" ") : args[i]
-                    switch (argument.type) {
-                        case "str" || undefined:
-                            argg = String(toUse)
-                            break
-                        case "num":
-                            argg = Number(toUse)
-                            break
-                        case "member":
-                            try { argg = Converter.prototype.memberConverter(ctx, toUse) }
-                            catch { argg = undefined }
-                            break
-                        case "user":
-                            try { argg = Converter.prototype.userConverter(ctx, toUse) }
-                            catch { argg = undefined }
-                            break
-                        case "channel":
-                            try { argg = Converter.prototype.channelConverter(ctx, toUse) }
-                            catch { argg = undefined }
-                    }
-                    if (argument.required && (Number.isNaN(argg) || argg === "" || argg === "undefined" || ((argument.type === "member" || argument.type === "user") && !argg))) throw new Error("Undefined Argument")
-                    properArgs[argument.name] = argg
-                    if (argument.useRest) break
+            if (!cmd.args) return {}
+            const properArgs = {}
+            let requiredArgs = new Array(cmd.args).reduce((a, c) => a + c.required ? 1 : 0, 0)
+            if (args.length < requiredArgs) throw new Errors.MissingArguments
+            if (args.length > cmd.args.length && !cmd.args[cmd.args.length - 1].useRest) throw new Errors.InvalidArguments
+            for (let i = 0; i < cmd.args.length; i++) {
+                let argg, argument = cmd.args[i], toUse = argument.useRest ? args.slice(i).join(" ") : args[i]
+                switch (argument.type) {
+                    case "str" || undefined:
+                        argg = String(toUse)
+                        break
+                    case "num":
+                        argg = Number(toUse)
+                        break
+                    case "member":
+                        try { argg = Converter.prototype.memberConverter(ctx, toUse) }
+                        catch { argg = undefined }
+                        break
+                    case "user":
+                        try { argg = Converter.prototype.userConverter(ctx, toUse) }
+                        catch { argg = undefined }
+                        break
+                    case "channel":
+                        try { argg = Converter.prototype.channelConverter(ctx, toUse) }
+                        catch { argg = undefined }
+                        break
                 }
-                ctx.args = properArgs
+                if (argument.required && (Number.isNaN(argg) || argg === "" || argg === "undefined" || ((argument.type === "member" || argument.type === "user") && !argg))) throw new Errors.InvalidArguments
+                properArgs[argument.name] = argg
+                if (argument.useRest) break
             }
-            catch (e) {
-                let err = { ...Object.getOwnPropertyDescriptors(e), id: "INVALIDARGS" }
-                console.error(e)
-                return this.emit("commandError", ctx, err)
-            }
+            ctx.args = properArgs
         }
-        checkArgs()
+        try { checkArgs() }
+        catch (e) {
+            return this.emit("commandError", ctx, e)
+        }
+        if (cmd.cooldown) {
+            let times = this.cooldowns.get(cmd.name)
+            if (!times) {
+                this.cooldowns.set(cmd.name, new Map())
+                times = this.cooldowns.get(cmd.name)
+            }
+            const now = Number(new Date())
+            if (times.has(msg.author.id)) {
+                const expires = Number(times.get(msg.author.id)) + (cmd.cooldown * 1000)
+                if (now < expires) {
+                    const left = (expires - now) / 1000
+                    return this.emit("commandCooldown", ctx, left)
+                }
+            }
+            times.set(msg.author.id, new Date())
+            setTimeout(() => times.delete(msg.author.id), cmd.cooldown)
+        }
+        this.emit("commandExecute", ctx)
         try {
-            if (cmd.cooldown) {
-                let times = this.cooldowns.get(cmd.name)
-                if (!times) {
-                    this.cooldowns.set(cmd.name, new Map())
-                    times = this.cooldowns.get(cmd.name)
-                }
-                const now = Number(new Date())
-                if (times.has(msg.author.id)) {
-                    const expires = Number(times.get(msg.author.id)) + (cmd.cooldown * 1000)
-                    if (now < expires) {
-                        const left = (expires - now) / 1000
-                        return this.emit("commandCooldown", ctx, left)
-                    }
-                }
-                times.set(msg.author.id, new Date())
-                setTimeout(() => times.delete(msg.author.id), cmd.cooldown)
-            }
-            if (!cmd.exec) {
-                throw new Error(`${cmd.name} command has no executor.`)
-            }
-            this.emit("commandExecute", ctx)
             await cmd.exec.bind(this)(ctx).then(() => {
                 this.emit("afterCommandExecute", ctx, timer)
             })
-
         }
         catch (e) {
-            let err = { ...Object.getOwnPropertyDescriptors(e), type: "EXECUTIONERROR" }
-            console.error(e)
+            let err = new Errors.ExecutionError(e.message, e.stack)
             this.emit("commandError", ctx, err)
         }
     }
-    /* paginator(msg, opts) {
+    paginator(ctx, msg, opts) {
         if (!opts) opts = {
+            items: [],
             type: "reaction",
-            time: 1000*40,
+            timeout: 1000*40,
             authorOnly: true
         }
         if (msg.author.id !== this.bot.user.id) throw new Error("Any message intended to be paginated can only be sent from the client.")
@@ -208,18 +233,26 @@ class Bot extends Eris.Client {
         if (opts.type === "reaction") {
 
             let emojiList = ["◀", "⏹", "▶"]
-            if ()
-            emojiList.forEach(a => )
+            if (ctx.guild) {
+                if (ctx.guild.me.permission.has("addReactions")) emojiList.map(a => msg.addReaction(a))
+                else throw new Error("Cannot add reactions, Missing Permissions.")
+            }
+            else emojiList.map(a => msg.addReaction(a))
+
             filter = (m, emoji, userID) => emojiList.includes(emoji.name) && opts.authorOnly ? userID === m.author.id : true
-            c = new ReactionCollector(this, msg)
+            c = new ReactionCollector(this, msg, filter)
+
+            c.on("collect", (m, e, uID) => {
+                console.log("yes")
+            })
         }
 
-    } */
+    } 
     getHelp(ctx, command = undefined) {
         let usageStr, argList = new Array(), cmd
         cmd = command ? command : ctx.command
         cmd = command instanceof Array ? cmd[0] : cmd
-        usageStr = cmd.aliases ? ctx.prefix + `[${cmd.name}|${cmd.aliases.join('|')}]` : usageStr = ctx.prefix + cmd.name
+        usageStr = cmd.aliases.length ? ctx.prefix + `[${cmd.name}|${cmd.aliases.join('|')}]` : usageStr = ctx.prefix + cmd.name
         if (!cmd.args) return usageStr
         cmd.args.map(a => {
             a.required ? argList.push(`<${a.name}>`) : argList.push(`[${a.name}${a.default ? `=${a.default}` : ""}]`)
@@ -252,6 +285,7 @@ class Bot extends Eris.Client {
     addCommand(cmd) {
         let check = this.getCommand(cmd.name)
         if (!(check.length === 0)) throw new Error("Command name/alias has already been registed.")
+        if (!cmd.exec) throw new Error("Command is missing \"exec\" function")
         if (cmd.aliases) {
             if (new Set(cmd.aliases).size !== cmd.aliases.length) throw new Error("Command aliases already registered.")
         }

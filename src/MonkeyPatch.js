@@ -1,24 +1,25 @@
 const Eris = require("eris");
 Object.defineProperty(Eris.User.prototype, "tag", {
-	get(that) {
-		return `${that.username}#${that.discriminator}`;
+	get() {
+		return `${this.username}#${this.discriminator}`;
 	}
 });
 
 Object.defineProperty(Eris.Member.prototype, "tag", {
-	get(that) {
-		return `${that.username}#${that.discriminator}`;
+	get() {
+		return `${this.username}#${this.discriminator}`;
 	}
 });
 
 Object.defineProperty(Eris.Channel.prototype, "send", {
-	get(that) {
-		return that.createMessage;
+	get() {
+		return this.createMessage;
+	}
+}); 
+
+Object.defineProperty(Eris.Guild.prototype, "me", {
+	get() {
+		return this.members.get(this._client.user.id);
 	}
 });
 
-Object.defineProperty(Eris.Guild.prototype, "me", {
-	get(that) {
-		return that.members.get(that._client.user.id);
-	}
-});

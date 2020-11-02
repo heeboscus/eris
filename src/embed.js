@@ -10,7 +10,7 @@ class Embed {
                 url,
                 color,
                 timestamp,
-                fields
+                fields: fields || []
             }
         }
         this.toJSON = () => this.data

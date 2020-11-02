@@ -3,10 +3,10 @@ module.exports = {
         if (ctx.bot.commandOptions.ownerID) {
             if (ctx.bot.commandOptions.ownerID instanceof Array
             || typeof ctx.bot.commandOptions.ownerID === "object") 
-            return ctx.bot.commandOptions.ownerID.includes(ctx.author.id);
-            
-            else return ctx.bot.commandOptions.ownerID === ctx.author.id;
+            return ctx.bot.commandOptions.ownerID.includes(ctx.author.id)
+            else return ctx.bot.commandOptions.ownerID === ctx.author.id
         }
-        else return false;
+            else return false
     }
 }
+

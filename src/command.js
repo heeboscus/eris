@@ -65,7 +65,6 @@ class Command {
          * @type {string}
          */
         this.category = category
-
     }
     /**
      * Sets the function to run when the command is called.
@@ -105,6 +104,14 @@ class Command {
      */
     setArgs(args) {
         this.args = args
+        return this
+    }
+    botPerms(permissions) {
+        this.neededBotPerms = permissions
+        return this
+    }
+    memberPerms(permissions) {
+        this.neededMemberPerms = permissions
         return this
     }
 }

@@ -1,9 +1,10 @@
 import Eris from "eris"
 
 declare namespace Hibiscus {
-    // Avoid using the "Function" type.
     type F = (...args: any[]) => any
-
+    type commandExec = (ctx: CommandContext) => any
+    type checkExec = (ctx: CommandContext) => boolean
+    
     interface ArgType {
         name: string
         type: "str" | "num" | "member" | "user"
@@ -30,6 +31,7 @@ declare namespace Hibiscus {
         addCommand(cmd: Command)
         removeCommand(cmd: Command)
         reloadCommand(cmd: Command)
+        getCommand(q: string): Command
         loadEvent(name: string, path: string)
         unloadEvent(name: string)
         defaultHelp: Command
@@ -38,14 +40,14 @@ declare namespace Hibiscus {
     export class Category {
         name: string
         commands: Command[]
-        globalChecks?: F[]
+        globalChecks?: Check[]
         path?: string
         addCommand(command: Command): this
-        setChecks(checks: F[]): this
+        setChecks(checks: checkExec[]): this
         constructor(opts: {
             name: string
             commands?: Command[]
-            globalChecks?: F[]
+            globalChecks?: Check[]
             path?: string
         })
     }
@@ -56,18 +58,14 @@ declare namespace Hibiscus {
         command: Command
         args: {[s: string]: any}
         prefix: string
-        send: Eris.TextChannel.send
+        send: Eris.Channel.prototype.createMeassage
         author: Eris.Member | Eris.User
-        channel: Eris.TextChannel | Eris.PrivateChannel
+        channel: Eris.TextChannel
         guild: Eris.Guild
     }
 
-    interface IsOwnerCheck {
-        (ctx: CommandContext): boolean
-    }
-
     export type Checks = {
-        isOwner: IsOwnerCheck
+        isOwner: checkExec
     }
 
     export class Command {
@@ -82,11 +80,13 @@ declare namespace Hibiscus {
         cooldown?: number
         path?: string
         category?: string
-        setExec(exec: Function): this
+        setExec(exec: commandExec): this
         setAliases(aliases: string): this
-        addCheck(check: Function): this
+        addCheck(check: checkExec): this
         setCooldown(time: number): this
         setArgs(args: ArgType[]): this
+        botPerms(permissions: string[]): this
+        memberPerms(permissions: string[]): this
         constructor(opts: {
             name: string
             exec?: F
@@ -94,14 +94,23 @@ declare namespace Hibiscus {
             args: ArgType[]
             aliases?: string[]
             hidden?: boolean
-            checks?: F[]
+            checks?: checkExec[]
             cooldown?: number
             guildOnly?: boolean
             path?: string
             category?: string
         })
     }
-
+    
+    export class Errors {
+        NoPrivate: Error
+        MissingBotPerms: Error
+        MissingMemberPerms: Error
+        CheckFailute: Error
+        MissingArguments: Error
+        InvalidArguments: Error
+        // ExecutionError(message?: string, stack?: string)
+    }
     export interface Utils {
         duration(date1: number, date2: number): string
     }
@@ -124,8 +133,8 @@ declare namespace Hibiscus {
         constructor(opts?: Eris.EmbedOptions)
     }
 
-    export function whenMentioned(): string[]
-    export function whenMentionedOr(basePrefix: any): typeof whenMentioned
+    export function whenMentioned(): string|string[]
+    export function whenMentionedOr(basePrefix: string|string[]): typeof whenMentioned
 
     export const VERSION: string
 

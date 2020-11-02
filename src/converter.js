@@ -6,7 +6,8 @@ const
     mentionRegex = new RegExp("<@!?[0-9]{15,21}>$"),
     idRegex = new RegExp("([0-9]{15,21})$"),
     channelMentionRegex = new RegExp("<#[0-9]{15,21}>$"),
-    channelNameRegex = new RegExp(".{1,32}$")
+    channelNameRegex = new RegExp(".{1,32}$"),
+    emojiRegex = new RegExp("<a?:.+?:\d+>")
 
 
 class Converter {
@@ -51,6 +52,7 @@ class Converter {
      * @param {string} q
      */
     channelConverter(ctx, q) {
+        if (!ctx.guild) throw new Error("No guild found in context.")
         if (q.match(idRegex)) return ctx.guild.channels.find(c => q === c.id)
         if (q.match(channelMentionRegex)) return ctx.guild.channels.find(c => q === `<#${c.id}>`)
         if (q.match(channelNameRegex)) return ctx.guild.channels.find(c => q === c.name)
