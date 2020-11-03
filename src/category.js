@@ -22,7 +22,7 @@ class Category {
      */
     addCommand(command) {
         let c = command
-        c.category = name
+        c.category = this.name
         this.commands.push(c)
         return this
     }
