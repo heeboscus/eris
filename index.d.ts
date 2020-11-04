@@ -58,7 +58,8 @@ declare namespace Hibiscus {
         command: Command
         args: {[s: string]: any}
         prefix: string
-        send: Eris.Channel.prototype.createMeassage
+        typing: Eris.TextChannel.sendTyping
+        send: Eris.TextChannel.createMeassage
         author: Eris.Member | Eris.User
         channel: Eris.TextChannel
         guild: Eris.Guild
@@ -109,7 +110,7 @@ declare namespace Hibiscus {
         CheckFailute: Error
         MissingArguments: Error
         InvalidArguments: Error
-        // ExecutionError(message?: string, stack?: string)
+        ExecutionError: Error
     }
     export interface Utils {
         duration(date1: number, date2: number): string
@@ -127,6 +128,7 @@ declare namespace Hibiscus {
         setImage(url: string)
         setAuthor(name: string, url?: string, icon_url?: string)
         addField(...args: Eris.EmbedField[]): this
+        toJSON(): Embed.data
         readonly data: {
             embed: Eris.EmbedOptions
         }

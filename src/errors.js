@@ -10,10 +10,6 @@ class MissingArguments extends Error {}
 
 class InvalidArguments extends Error {}
 
-class ExecutionError extends Error {
-    constructor(message, stack) {
-        super(message, stack)
-    }
-}
+class ExecutionError extends Error {}
 
 module.exports = { NoPrivate, MissingBotPerms, MissingMemberPerms, CheckFailure, MissingArguments, InvalidArguments, ExecutionError }

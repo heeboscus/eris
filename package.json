@@ -1,6 +1,6 @@
 {
   "name": "@skullbite/hibiscus",
-  "version": "1.0.17",
+  "version": "1.0.19",
   "description": "Command Handler for Eris",
   "main": "index.js",
   "scripts": {
@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "eris": "^0.13.3",
-    "eris-collector": "^1.0.1"
+    "eris-collector": "^1.0.1",
+    "phin": "^3.5.1"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.6.0",
