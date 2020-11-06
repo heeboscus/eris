@@ -4,7 +4,12 @@ declare namespace Hibiscus {
     type F = (...args: any[]) => any
     type commandExec = (ctx: CommandContext) => any
     type checkExec = (ctx: CommandContext) => boolean
-    
+    interface paginatorOptions {
+        pages: (object|string)[]
+        type: "reaction" | "message"
+        timeout: number
+        authorOnly: boolean
+    }
     interface ArgType {
         name: string
         type: "str" | "num" | "member" | "user"
@@ -23,14 +28,15 @@ declare namespace Hibiscus {
         categories: Map<string, Category>
         cooldowns: Map<string, Map<string, number>>
         async processCommands(msg: Eris.Message)
-        getHelp(ctx: CommandContext, command: Command): string
+        getHelp(ctx: CommandContext, command: Command=undefined): string
         loadCategory(category: Category)
+        paginator(ctx: CommandContext, options: paginatorOptions)
         unloadCategory(name: string)
         reloadCategory(name: string)
         getCatgeory(name: string): Category
         addCommand(cmd: Command)
-        removeCommand(cmd: Command)
-        reloadCommand(cmd: Command)
+        removeCommand(cmd: string)
+        reloadCommand(cmd: string)
         getCommand(q: string): Command
         loadEvent(name: string, path: string)
         unloadEvent(name: string)
@@ -71,7 +77,7 @@ declare namespace Hibiscus {
 
     export class Command {
         name: string
-        exec: F
+        exec: commandExec
         description?: string
         args?: ArgType
         aliases?: string[]

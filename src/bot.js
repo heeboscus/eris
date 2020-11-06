@@ -4,6 +4,7 @@ const Command = require("./command.js")
 const Converter = require("./converter.js")
 const Errors = require("./errors")
 const { MessageCollector, ReactionCollector } = require("eris-collector")
+const errors = require("./errors")
 
 /**
 * Hibiscus Client.
@@ -221,31 +222,108 @@ class Bot extends Eris.Client {
             this.emit("commandError", ctx, err)
         }
     }
-    paginator(ctx, msg, opts) {
-        if (!opts) opts = {
-            items: [],
-            type: "reaction",
-            timeout: 1000*40,
-            authorOnly: true
+    async paginate(ctx, options=undefined) {
+        let msg,
+            // allSameType = (arr) => new Set(arr.map((x) => typeof x)).size <= 1,
+            currentPage = 0,
+            bot = (ID) => {
+                let u = Converter.prototype.userConverter(ctx, ID)
+                return u ? u.bot : false
+            }
+            filter,
+            c
+        let opts = {
+            pages: options.pages ? options.pages : [],
+            type: options.type ? options.type : "reaction",
+            timeout: options.timeout ? options.timeout : 1000*40,
+            authorOnly: options.authorOnly || !options.authorOnly ? options.authorOnly : true
         }
-        if (msg.author.id !== this.bot.user.id) throw new Error("Any message intended to be paginated can only be sent from the client.")
-        let filter, c
-        if (opts.type === "reaction") {
+        /* TODO: Proper error handling for incorrect/unmatching types
+        if (!allSameType(opts.pages.map(i => typeof i))) throw new errors.ExecutionError("Types in pages aren't matching. They can only be string or object types.")
+        if (!opts.pages.map(i => typeof i).includes("string") || !opts.pages.map(i => typeof i).includes("object")) throw new errors.ExecutionError("Page types can only be string or object types.") */
 
-            let emojiList = ["◀", "⏹", "▶"]
+        msg = await ctx.send(opts.pages[currentPage])
+        if (opts.type === "reaction") {
+            let emojiList = ["⏪", "◀", "⏹", "▶", "⏩"]
             if (ctx.guild) {
                 if (ctx.guild.me.permission.has("addReactions")) emojiList.map(a => msg.addReaction(a))
-                else throw new Error("Cannot add reactions, Missing Permissions.")
+                else throw new errors.MissingBotPerms("Cannot add reactions. Missing permissions.")
             }
-            else emojiList.map(a => msg.addReaction(a))
-
-            filter = (m, emoji, userID) => emojiList.includes(emoji.name) && opts.authorOnly ? userID === m.author.id : true
-            c = new ReactionCollector(this, msg, filter)
-
+            else {
+                emojiList.map(a => msg.addReaction(a)) 
+            }
+            filter = (m, emoji, userID) => emojiList.includes(emoji.name) && opts.authorOnly ? userID === ctx.author.id : !bot(userID)
+            c = new ReactionCollector(this, msg, filter, { time: opts.timeout })
             c.on("collect", (m, e, uID) => {
-                console.log("yes")
+                switch (e.name) {
+                    case "⏪":
+                        currentPage = 0
+                        msg.edit(opts.pages[currentPage])
+                        break 
+                    case "◀":
+                        if (currentPage === 0) return
+                        currentPage--
+                        msg.edit(opts.pages[currentPage])
+                        break
+                    case "⏹":
+                        try { msg.removeReactions() }
+                        catch { msg.delete() }
+                        c.stop()
+                        break
+                    case "▶":
+                        if (currentPage === opts.pages.length - 1) return
+                        currentPage++
+                        msg.edit(opts.pages[currentPage])
+                        break
+                    case "⏩":
+                        currentPage = opts.pages.length - 1
+                        msg.edit(opts.pages[currentPage])
+                        break
+                    default: return 
+                }
+                try { msg.removeReaction(e.name, uID) }
+                catch { }
             })
         }
+        else if (opts.type === "message") {
+            let textList = ["first", "previous", "stop", "next", "last"]
+            let menu = await ctx.send(`**First** | **Previous** | **Stop** | **Next** | **Last**`)
+            filter = (m) => textList.includes(m.content.toLowerCase()) && opts.authorOnly ? m.author.uID === ctx.author.id : !bot(userID)
+            c = new MessageCollector(this, ctx.channel, filter, { time: opts.timeout })
+            c.on("collect", m => {
+                switch (m.content.toLowerCase()) {
+                    case "first":
+                        currentPage = 0
+                        msg.edit(opts.pages[currentPage])
+                        break 
+                    case "previous":
+                        if (currentPage === 0) return
+                        currentPage--
+                        msg.edit(opts.pages[currentPage])
+                        break
+                    case "stop":
+                        currentPage--
+                        c.stop()
+                    case "next":
+                        if (currentPage === opts.pages.length - 1) return
+                        currentPage++
+                        msg.edit(opts.pages[currentPage])
+                        break
+                    case "last":
+                        currentPage = opts.pages.length - 1
+                        msg.edit(opts.pages[currentPage])
+                        break
+                    default: return
+                }
+                try { m.delete() }
+                catch { }
+            })
+            c.on("end", () => {
+                menu.delete()
+            })
+
+        }
+        else throw new errors.ExecutionError("Paginator type must be 'message' or 'reaction'.")
 
     } 
     getHelp(ctx, command = undefined) {
@@ -279,9 +357,6 @@ class Bot extends Eris.Client {
         this.loadCategory(require(cat.path))
     }
     getCategory(name) { return this.categories.get(name) }
-    /**
-     * @param {Command} cmd The command object to add to the bot.
-     */
     addCommand(cmd) {
         let check = this.getCommand(cmd.name)
         if (!(check.length === 0)) throw new Error("Command name/alias has already been registed.")
@@ -292,23 +367,21 @@ class Bot extends Eris.Client {
         this.commands.set(cmd.name, cmd)
         if (cmd.cooldown) this.cooldowns.set(cmd.name, new Map())
     }
-    /**
-     * @param {Command} cmd The command object to remove.
-     */
-    removeCommand(cmd) {
-        this.commands.delete(cmd.name)
-        if (cmd.category || !cmd.path) return
+    removeCommand(name) {
+        const cmd = this.getCommand(name)
+        if (!cmd.length) return
+        this.commands.delete(name)
+        if (!cmd.category || !cmd.path) return
         delete require.cache[require.resolve(cmd.path)]
     }
-    /**
-     * @param {Command} cmd The command object to reloard 
-     */
-    reloadCommand(cmd) {
-        const tempCmd = this.getCommand(cmd.name)
+    reloadCommand(name) {
+        const tempCmd = this.getCommand(name)
         if (!tempCmd.length) throw new Error("No command found.")
-        this.removeCommand(cmd)
+        if (!tempCmd.path) throw new Error("No owo")
+        this.removeCommand(tempCmd.name)
+        
         try {
-            this.addCommand(cmd.name, cmd)
+            this.addCommand(name, test)
         }
         catch (e) {
             this.commands.set(tempCmd.name, tempCmd)
