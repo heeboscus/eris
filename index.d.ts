@@ -100,7 +100,7 @@ declare namespace Hibiscus {
             name: string
             exec?: F
             description?: string
-            args: ArgType[]
+            args?: ArgType[]
             aliases?: string[]
             hidden?: boolean
             checks?: checkExec[]
