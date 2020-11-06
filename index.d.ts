@@ -65,9 +65,9 @@ declare namespace Hibiscus {
         command: Command
         args: {[s: string]: any}
         prefix: string
-        // WTF is the problem with these types
-        // typing: Eris.TextChannel.typing
-        // send(): Eris.Textable.prototype
+        // TODO: figure out what types need to go here
+        typing
+        send
         author: Eris.Member | Eris.User
         channel: Eris.TextChannel
         guild: Eris.Guild
