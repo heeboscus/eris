@@ -1,9 +1,14 @@
-import Eris from "eris"
+import Eris, { CommandOptions } from "eris"
 
 declare namespace Hibiscus {
     type F = (...args: any[]) => any
     type commandExec = (ctx: CommandContext) => any
     type checkExec = (ctx: CommandContext) => boolean
+    interface cmdOpts {
+        prefix: string | string[] | ((m: Eris.Message) => string | string[] | Function)
+        usePrefixSpaces?: boolean
+        ownerID?: string | string[]
+    }
     interface paginatorOptions {
         pages: (object|string)[]
         type: "reaction" | "message"
@@ -18,12 +23,7 @@ declare namespace Hibiscus {
     }
 
     export class Bot extends Eris.Client {
-        options: Eris.ClientOptions
-        commandOptions: {
-            prefix: string | string[] | ((m: Eris.Message) => string | string[] | Function)
-            usePrefixSpaces?: boolean
-            ownerID?: string | string[]
-        }
+        constructor(token: string, options: Eris.ClientOptions, hibiscusOptions: cmdOpts)
         commands: Map<string, Command>
         categories: Map<string, Category>
         cooldowns: Map<string, Map<string, number>>
