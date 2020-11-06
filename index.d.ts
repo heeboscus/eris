@@ -15,6 +15,7 @@ declare namespace Hibiscus {
         timeout: number
         authorOnly: boolean
     }
+    
     interface ArgType {
         name: string
         type: "str" | "num" | "member" | "user"
@@ -27,8 +28,8 @@ declare namespace Hibiscus {
         commands: Map<string, Command>
         categories: Map<string, Category>
         cooldowns: Map<string, Map<string, number>>
-        async processCommands(msg: Eris.Message)
-        getHelp(ctx: CommandContext, command: Command=undefined): string
+        processCommands(msg: Eris.Message): Promise<void>
+        getHelp(ctx: CommandContext, command?: Command): string
         loadCategory(category: Category)
         paginator(ctx: CommandContext, options: paginatorOptions)
         unloadCategory(name: string)
@@ -46,14 +47,14 @@ declare namespace Hibiscus {
     export class Category {
         name: string
         commands: Command[]
-        globalChecks?: Check[]
+        globalChecks?: checkExec[]
         path?: string
         addCommand(command: Command): this
         setChecks(checks: checkExec[]): this
         constructor(opts: {
             name: string
             commands?: Command[]
-            globalChecks?: Check[]
+            globalChecks?: checkExec[]
             path?: string
         })
     }
@@ -64,8 +65,9 @@ declare namespace Hibiscus {
         command: Command
         args: {[s: string]: any}
         prefix: string
-        typing: Eris.TextChannel.sendTyping
-        send: Eris.TextChannel.createMeassage
+        // WTF is the problem with these types
+        // typing: Eris.TextChannel.typing
+        // send(): Eris.Textable.prototype
         author: Eris.Member | Eris.User
         channel: Eris.TextChannel
         guild: Eris.Guild
@@ -134,7 +136,7 @@ declare namespace Hibiscus {
         setImage(url: string)
         setAuthor(name: string, url?: string, icon_url?: string)
         addField(...args: Eris.EmbedField[]): this
-        toJSON(): Embed.data
+        toJSON(): Embed["data"]
         readonly data: {
             embed: Eris.EmbedOptions
         }
