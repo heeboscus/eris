@@ -72,10 +72,6 @@ declare namespace Hibiscus {
         guild: Eris.Guild
     }
 
-    export type Checks = {
-        isOwner: checkExec
-    }
-
     export class Command {
         name: string
         exec: commandExec
@@ -119,7 +115,7 @@ declare namespace Hibiscus {
         InvalidArguments: Error
         ExecutionError: Error
     }
-    export interface Utils {
+    export class Utils {
         duration(date1: number, date2: number): string
     }
 
@@ -146,6 +142,7 @@ declare namespace Hibiscus {
     export function whenMentionedOr(basePrefix: string|string[]): typeof whenMentioned
 
     export const VERSION: string
+    export const Checks: { isOwner: checkExec }
 
 }
 
