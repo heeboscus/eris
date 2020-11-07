@@ -1,4 +1,4 @@
-import Eris, { CommandOptions } from "eris"
+import * as Eris from "eris"
 
 declare namespace Hibiscus {
     type F = (...args: any[]) => any
@@ -65,9 +65,8 @@ declare namespace Hibiscus {
         command: Command
         args: {[s: string]: any}
         prefix: string
-        // TODO: figure out what types need to go here
-        typing
-        send
+        typing: Eris.Textable["sendTyping"]
+        send: Eris.Textable["createMessage"]
         author: Eris.Member | Eris.User
         channel: Eris.TextChannel
         guild: Eris.Guild
