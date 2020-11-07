@@ -338,6 +338,7 @@ class Bot extends Eris.Client {
         return usageStr + " " + argList.join(' ')
     }
     loadCategory(category) {
+        if (this.getCategory(category.name)) throw new Error("Category name has already been registered.")
         category.commands.map(cmd => this.addCommand(cmd))
         this.categories.set(category.name, category)
     }
@@ -345,7 +346,7 @@ class Bot extends Eris.Client {
         const category = this.getCategory(name)
         if (!category) return
         category.commands.map(a => {
-            this.removeCommand(a)
+            this.removeCommand(a.name)
         })
         this.categories.delete(name)
         if (category.path) delete require.cache[require.resolve(category.path)]
@@ -359,8 +360,13 @@ class Bot extends Eris.Client {
     getCategory(name) { return this.categories.get(name) }
     addCommand(cmd) {
         let check = this.getCommand(cmd.name)
-        if (!(check.length === 0)) throw new Error("Command name/alias has already been registed.")
-        if (!cmd.exec) throw new Error("Command is missing \"exec\" function")
+        if (!(check.length === 0)) {
+            if (check.category) {
+                this.unloadCategory(check.category)
+            }
+            throw new Error("Command name/alias has already been registed.")
+        }
+        if (!cmd.exec) throw new Error("Command is missing \"exec\" function.")
         if (cmd.aliases) {
             if (new Set(cmd.aliases).size !== cmd.aliases.length) throw new Error("Command aliases already registered.")
         }
@@ -377,7 +383,7 @@ class Bot extends Eris.Client {
     reloadCommand(name) {
         const tempCmd = this.getCommand(name)
         if (!tempCmd.length) throw new Error("No command found.")
-        if (!tempCmd.path) throw new Error("No owo")
+        if (!tempCmd.path) throw new Error("No path to reload from.")
         this.removeCommand(tempCmd.name)
         
         try {
