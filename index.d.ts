@@ -85,7 +85,7 @@ declare namespace Hibiscus {
         path?: string
         category?: string
         setExec(exec: commandExec): this
-        setAliases(aliases: string): this
+        setAliases(aliases: string[]): this
         addCheck(check: checkExec): this
         setCooldown(time: number): this
         setArgs(args: ArgType[]): this
@@ -124,9 +124,9 @@ declare namespace Hibiscus {
         setColor(color: number): this
         setTimestamp(timestamp: number | string): this
         setFooter(text: string, icon_url?: string): this
-        setThumbnail(url: string)
-        setImage(url: string)
-        setAuthor(name: string, url?: string, icon_url?: string)
+        setThumbnail(url: string): this
+        setImage(url: string): this
+        setAuthor(name: string, url?: string, icon_url?: string): this
         addField(name: string, value: string, inline?: boolean): this
         toJSON(): Embed["data"]
         readonly data: {

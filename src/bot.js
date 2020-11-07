@@ -435,7 +435,7 @@ class Bot extends Eris.Client {
                     return ctx.send(`\`❌\` No command or category found.`)
                 }
                 const cmd = command instanceof Array ? command[0] : command
-                return ctx.send(`\`🌺\` Command Help | \`${cmd.name}\`\n> Description: ${cmd.description ? cmd.description : "No Description."}\n> Usage: *\`${this.getHelp(ctx, cmd)}\`*${cmd.cooldown ? `\n> Cooldown: ${cmd.cooldown}s` : ""}`)
+                return ctx.send(`\`🌺\` Command Help | \`${cmd.name}\`\n> Description: ${cmd.description ? cmd.description : "No Description."}\n> Usage: *\`${this.getHelp(ctx, cmd)}\`*${cmd.cooldown ? `\n> Cooldown: ${cmd.cooldown}ms` : ""}`)
             }
         })
 }
