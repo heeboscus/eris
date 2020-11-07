@@ -134,7 +134,7 @@ declare namespace Hibiscus {
         setThumbnail(url: string)
         setImage(url: string)
         setAuthor(name: string, url?: string, icon_url?: string)
-        addField(...args: Eris.EmbedField[]): this
+        addField(name: string, value: string, inline?: boolean): this
         toJSON(): Embed["data"]
         readonly data: {
             embed: Eris.EmbedOptions
