@@ -7,7 +7,7 @@ const utils = require('./src/utils.js')
 const bot = require('./src/bot.js')
 const errors = require("./src/errors.js")
 const { version } = require('./package.json')
-// require("./src/MonkeyPatch")
+require("./src/MonkeyPatch")
 
 function escapeRegex(str) {
     return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
