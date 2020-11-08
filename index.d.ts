@@ -25,6 +25,7 @@ declare namespace Hibiscus {
 
     export class Bot extends Eris.Client {
         constructor(token: string, options: Eris.ClientOptions, hibiscusOptions: cmdOpts)
+        commandOptions: cmdOpts
         commands: Map<string, Command>
         categories: Map<string, Category>
         cooldowns: Map<string, Map<string, number>>
@@ -106,14 +107,14 @@ declare namespace Hibiscus {
         })
     }
     
-    export class Errors {
-        NoPrivate: Error
-        MissingBotPerms: Error
-        MissingMemberPerms: Error
-        CheckFailute: Error
-        MissingArguments: Error
-        InvalidArguments: Error
-        ExecutionError: Error
+    export const Errors: {
+        NoPrivate: typeof Error
+        MissingBotPerms: typeof Error
+        MissingMemberPerms: typeof Error
+        CheckFailure: typeof Error
+        MissingArguments: typeof Error
+        InvalidArguments: typeof Error
+        ExecutionError: typeof Error
     }
 
     export class Embed {
