@@ -4,6 +4,9 @@ declare namespace Hibiscus {
     type F = (...args: any[]) => any
     type commandExec = (ctx: CommandContext) => any
     type checkExec = (ctx: CommandContext) => boolean
+    class ExecutionError extends Error {
+        original: typeof Error
+    }
     interface cmdOpts {
         prefix: string | string[] | ((m: Eris.Message) => string | string[] | Function)
         usePrefixSpaces?: boolean
@@ -114,7 +117,7 @@ declare namespace Hibiscus {
         CheckFailure: typeof Error
         MissingArguments: typeof Error
         InvalidArguments: typeof Error
-        ExecutionError: typeof Error
+        ExecutionError: typeof ExecutionError
     }
 
     export class Embed {
@@ -138,11 +141,9 @@ declare namespace Hibiscus {
 
     export function whenMentioned(): string|string[]
     export function whenMentionedOr(basePrefix: string|string[]): typeof whenMentioned
-
     export const VERSION: string
     export const Utils: { duration(date1: number, date2: number): string }
     export const Checks: { isOwner: checkExec }
-
 }
 
 export = Hibiscus
