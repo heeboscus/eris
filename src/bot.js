@@ -230,7 +230,6 @@ class Bot extends Eris.Client {
                 let u = Converter.prototype.userConverter(ctx, ID)
                 return u ? u.bot : false
             }
-            filter,
             c
         let opts = {
             pages: options.pages ? options.pages : [],
@@ -252,7 +251,7 @@ class Bot extends Eris.Client {
             else {
                 emojiList.map(a => msg.addReaction(a)) 
             }
-            filter = (m, emoji, userID) => emojiList.includes(emoji.name) && opts.authorOnly ? userID === ctx.author.id : !bot(userID)
+            let filter = (m, emoji, userID) => emojiList.includes(emoji.name) && opts.authorOnly ? userID === ctx.author.id : !bot(userID)
             c = new ReactionCollector(this, msg, filter, { time: opts.timeout })
             c.on("collect", (m, e, uID) => {
                 switch (e.name) {
@@ -288,7 +287,7 @@ class Bot extends Eris.Client {
         else if (opts.type === "message") {
             let textList = ["first", "previous", "stop", "next", "last"]
             let menu = await ctx.send(`**First** | **Previous** | **Stop** | **Next** | **Last**`)
-            filter = (m) => textList.includes(m.content.toLowerCase()) && opts.authorOnly ? m.author.uID === ctx.author.id : !bot(userID)
+            let filter = (m) => textList.includes(m.content.toLowerCase()) && opts.authorOnly ? m.author.uID === ctx.author.id : !bot(userID)
             c = new MessageCollector(this, ctx.channel, filter, { time: opts.timeout })
             c.on("collect", m => {
                 switch (m.content.toLowerCase()) {
@@ -346,7 +345,7 @@ class Bot extends Eris.Client {
         const category = this.getCategory(name)
         if (!category) return
         category.commands.map(a => {
-            this.removeCommand(a.name)
+            this.command.delete(a.name)
         })
         this.categories.delete(name)
         if (category.path) delete require.cache[require.resolve(category.path)]
