@@ -230,7 +230,6 @@ class Bot extends Eris.Client {
                 let u = Converter.prototype.userConverter(ctx, ID)
                 return u ? u.bot : false
             }
-            c
         let opts = {
             pages: options.pages ? options.pages : [],
             type: options.type ? options.type : "reaction",
@@ -252,7 +251,7 @@ class Bot extends Eris.Client {
                 emojiList.map(a => msg.addReaction(a)) 
             }
             let filter = (m, emoji, userID) => emojiList.includes(emoji.name) && opts.authorOnly ? userID === ctx.author.id : !bot(userID)
-            c = new ReactionCollector(this, msg, filter, { time: opts.timeout })
+            let c = new ReactionCollector(this, msg, filter, { time: opts.timeout })
             c.on("collect", (m, e, uID) => {
                 switch (e.name) {
                     case "⏪":
@@ -288,7 +287,7 @@ class Bot extends Eris.Client {
             let textList = ["first", "previous", "stop", "next", "last"]
             let menu = await ctx.send(`**First** | **Previous** | **Stop** | **Next** | **Last**`)
             let filter = (m) => textList.includes(m.content.toLowerCase()) && opts.authorOnly ? m.author.uID === ctx.author.id : !bot(userID)
-            c = new MessageCollector(this, ctx.channel, filter, { time: opts.timeout })
+            let c = new MessageCollector(this, ctx.channel, filter, { time: opts.timeout })
             c.on("collect", m => {
                 switch (m.content.toLowerCase()) {
                     case "first":
