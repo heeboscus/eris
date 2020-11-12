@@ -222,7 +222,7 @@ class Bot extends Eris.Client {
             this.emit("commandError", ctx, err)
         }
     }
-    async paginate(ctx, options=undefined) {
+    async paginate(ctx, options) {
         let msg,
             // allSameType = (arr) => new Set(arr.map((x) => typeof x)).size <= 1,
             currentPage = 0,
@@ -239,7 +239,6 @@ class Bot extends Eris.Client {
         /* TODO: Proper error handling for incorrect/unmatching types
         if (!allSameType(opts.pages.map(i => typeof i))) throw new errors.ExecutionError("Types in pages aren't matching. They can only be string or object types.")
         if (!opts.pages.map(i => typeof i).includes("string") || !opts.pages.map(i => typeof i).includes("object")) throw new errors.ExecutionError("Page types can only be string or object types.") */
-
         msg = await ctx.send(opts.pages[currentPage])
         if (opts.type === "reaction") {
             let emojiList = ["⏪", "◀", "⏹", "▶", "⏩"]
@@ -286,7 +285,7 @@ class Bot extends Eris.Client {
         else if (opts.type === "message") {
             let textList = ["first", "previous", "stop", "next", "last"]
             let menu = await ctx.send(`**First** | **Previous** | **Stop** | **Next** | **Last**`)
-            let filter = (m) => textList.includes(m.content.toLowerCase()) && opts.authorOnly ? m.author.uID === ctx.author.id : !bot(userID)
+            let filter = (m) => textList.includes(m.content.toLowerCase()) && opts.authorOnly ? m.author.id === ctx.author.id : !bot(m.author.id)
             let c = new MessageCollector(this, ctx.channel, filter, { time: opts.timeout })
             c.on("collect", m => {
                 switch (m.content.toLowerCase()) {
