@@ -25,8 +25,6 @@ class Converter {
         else if (q.match(tagRegex)) mem = ctx.guild.members.find(m => q === `${m.username}#${m.discriminator}`)
         else if (q.match(nickRegex)) mem = ctx.guild.members.find(m => m.nick && q === m.nick)
         else if (q.match(nameRegex)) mem = ctx.guild.members.find(m => q === m.username)
-        else mem = undefined
-        mem ? mem.tag = `${mem.username}#${mem.discriminator}` : {}
         return mem
     }
     /**
@@ -41,8 +39,6 @@ class Converter {
         else if (q.match(mentionRegex)) user = ctx.bot.users.find(u => Boolean(q.match(new RegExp(`<@!?${u.id}>`))))
         else if (q.match(tagRegex)) user = ctx.bot.users.find(u => q === `${u.username}#${u.discriminator}`)
         else if (q.match(nameRegex)) user = ctx.bot.users.find(u => q === u.username)
-        else user = undefined
-        user ? user.tag = `${user.username}#${user.discriminator}` : {}
         return user
     }
     /**
