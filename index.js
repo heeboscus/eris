@@ -1,33 +1,4 @@
-/* 
-Copyright (c) 2020 Sahkai Stowe
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-const category = require('./src/category.js')
-const checks = require('./src/checks.js')
-const context = require('./src/context.js')
-const command = require('./src/command.js')
-const embed = require('./src/embed.js')
-const utils = require('./src/utils.js')
-const bot = require('./src/bot.js')
-const errors = require("./src/errors.js")
+const { Command, Group } = require('./src/command.js')
 const { version } = require('./package.json')
 require("./src/MonkeyPatch")
 
@@ -47,16 +18,16 @@ const whenMentionedOr = function (basePrefix) {
     return f
 }
 
-
 const Hibiscus = {}
-Hibiscus.Bot = bot
-Hibiscus.CommandContext = context
-Hibiscus.Category = category
-Hibiscus.Checks = checks
-Hibiscus.Command = command
-Hibiscus.Utils = utils
-Hibiscus.Embed = embed
-Hibiscus.Errors = errors
+Hibiscus.Bot = require('./src/bot.js')
+Hibiscus.CommandContext = require('./src/context.js')
+Hibiscus.Category = require('./src/category.js')
+Hibiscus.Checks = require('./src/checks.js')
+Hibiscus.Command = Command
+Hibiscus.Group = Group
+Hibiscus.Utils = require('./src/utils.js')
+Hibiscus.Embed = require('./src/embed.js')
+Hibiscus.Errors = require("./src/errors.js")
 Hibiscus.whenMentioned = whenMentioned
 Hibiscus.whenMentionedOr = whenMentionedOr
 Hibiscus.VERSION = version

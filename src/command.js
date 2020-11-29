@@ -1,13 +1,15 @@
+const { key } = require("eris-collector/src/classes/ReactionCollector")
+
 /**
  * Hibiscus Command Object.
  */
 class Command {
     /**
      * Creates a command object.
-     * @param {{name: string, exec?: Function, description?: string, args: {name: string, type: ("str"|"num"|"member"|"user"), required?: boolean, useRest?: boolean}[], aliases?: string[], hidden?: boolean, checks?: Function[], cooldown?: number, guildOnly?: boolean, path?: string, category?: string}} opts Command options.
+     * @param {{name: string, exec?: Function, description?: string, args: {name: string, type: ("str"|"num"|"member"|"user"), required?: boolean, useRest?: boolean}[], aliases?: string[], hidden?: boolean, checks?: Function[], cooldown?: number, guildOnly?: boolean, path?: string, category?: string, parent?: string}} opts Command options.
      */
     constructor(opts) {
-        const { name, exec, description, args, aliases, hidden, checks, cooldown, guildOnly, path, category } = opts
+        const { name, exec, description, args, aliases, hidden, checks, cooldown, guildOnly, path, category, parent } = opts
         if (!opts) throw new Error("Command requires an object.")
         if (!opts.name || !opts.name.length) throw new Error("Command is missing a name.")
         /**
@@ -65,6 +67,11 @@ class Command {
          * @type {string}
          */
         this.category = category
+        /**
+         * The parent of a subcommand.
+         * @type {string}
+         */
+        this.parent = parent
     }
     /**
      * Sets the function to run when the command is called.
@@ -116,4 +123,27 @@ class Command {
     }
 }
 
-module.exports = Command
+class Group extends Command {
+    constructor(opts) {
+        super(opts)
+        this.subcommands = new Map()
+        this.subCooldowns = new Map()
+    }
+    getSubcommand(q) { 
+        let cmd = this.subcommands.get(q) || Array.from(this.subcommands.values()).filter((command) => command.aliases && command.aliases.includes(q)) 
+        return cmd instanceof Array ? cmd[0] : cmd
+    }
+    addSubcommand(cmd) {
+        let check = this.getSubcommand(cmd.name)
+        if (check) throw new Error(`${this.name}: Subcommand name/alias has already been registed.`)
+        if (!cmd.exec) throw new Error(`${this.name}: Subcommand is missing \"exec\" function.`)
+        if (cmd.aliases) {
+            if (new Set(cmd.aliases).size !== cmd.aliases.length) throw new Error(`${this.name}: Subcommand aliases already registered.`)
+        }
+        this.subcommands.set(cmd.name, cmd)
+        if (cmd.cooldown) this.subCooldowns.set(cmd.name, new Map())
+        cmd.parent = this.name
+        return this
+    }
+}
+module.exports = { Command, Group }

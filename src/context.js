@@ -3,6 +3,7 @@ class CommandContext {
         this.message = message
         this.bot = bot
         this.command = command
+        this.invokedSubcommand = undefined
         this.args = args
         this.prefix = prefix
         this.send = message.channel.send.bind(message.channel)

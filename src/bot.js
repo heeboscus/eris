@@ -1,6 +1,6 @@
 const Eris = require("eris")
 const CommandContext = require("./context.js")
-const Command = require("./command.js")
+const { Command, Group } = require("./command.js")
 const Converter = require("./converter.js")
 const Errors = require("./errors")
 const { MessageCollector, ReactionCollector } = require("eris-collector")
@@ -44,7 +44,7 @@ class Bot extends Eris.Client {
         this.cooldowns = new Map()
         this.once("shardPreReady", () => {
             this.preReady = true
-            if (!this.getCommand("help").length) this.addCommand(this.defaultHelp)
+            if (!this.getCommand("help")) this.addCommand(this.defaultHelp)
             try {
                 typeof this.commandOptions.prefix === "function" &&
                     (this.commandOptions.prefix.length === 0 || this.commandOptions.prefix.length === 1)
@@ -89,10 +89,17 @@ class Bot extends Eris.Client {
         if (!prefix) return
         let args = msg.content.slice(prefix.length).split(' ')
         const name = args.shift().toLowerCase()
-        let command = this.getCommand(name)
+        let command = this.commands.get(name) || Array.from(this.commands.values()).filter((command) => command.aliases && command.aliases.includes(name))
         if (!command || command.length === 0) return
-        const cmd = command instanceof Array ? command[0] : command
+        let cmd = command instanceof Array ? command[0] : command
         let ctx = new CommandContext(msg, this, cmd, {}, prefix)
+        if (cmd.subcommands && args.length > 0) {
+            let subcmd = cmd.getSubcommand(args.shift().toLowerCase())
+            if (subcmd) {
+                ctx.invokedSubcommand = subcmd
+                cmd = subcmd
+            }
+        }
         if (cmd.guildOnly && !msg.guildID) {
             let err = new Errors.NoPrivate
             return this.emit("commandError", ctx, err)
@@ -324,15 +331,16 @@ class Bot extends Eris.Client {
 
     } 
     getHelp(ctx, command = undefined) {
-        let usageStr, argList = new Array(), cmd
-        cmd = command ? command : ctx.command
-        cmd = command instanceof Array ? cmd[0] : cmd
-        usageStr = cmd.aliases.length ? ctx.prefix + `[${cmd.name}|${cmd.aliases.join('|')}]` : usageStr = ctx.prefix + cmd.name
-        if (!cmd.args) return usageStr
+        let argList = new Array(), cmd, parent, parentStr
+        cmd = command ? command : ctx.invokedSubcommand ? ctx.invokedSubcommand : ctx.command
+        if (cmd.parent) parent = this.getCommand(cmd.parent)
+        parentStr = parent ? parent.aliases.length ? `[${parent.name}|${parent.aliases.join('|')} ` : parent.name+" " :  ""
+        let usage = cmd.aliases.length ? ctx.prefix + `${parentStr}[${cmd.name}|${cmd.aliases.join('|')}]` : ctx.prefix + parentStr + cmd.name
+        if (!cmd.args) return usage
         cmd.args.map(a => {
-            a.required ? argList.push(`<${a.name}>`) : argList.push(`[${a.name}${a.default ? `=${a.default}` : ""}]`)
+            a.required ? argList.push(`<${a.name}>`) : argList.push(`[${a.name}]`)
         })
-        return usageStr + " " + argList.join(' ')
+        return usage + " " + argList.join(" ")
     }
     loadCategory(category) {
         if (this.getCategory(category.name)) throw new Error("Category name has already been registered.")
@@ -357,13 +365,22 @@ class Bot extends Eris.Client {
     getCategory(name) { return this.categories.get(name) }
     addCommand(cmd) {
         let check = this.getCommand(cmd.name)
-        if (!(check.length === 0)) {
+        if (check) {
             if (check.category) {
                 this.unloadCategory(check.category)
             }
             throw new Error("Command name/alias has already been registed.")
         }
-        if (!cmd.exec) throw new Error("Command is missing \"exec\" function.")
+        if (!cmd.exec) {
+            if (!cmd.subcommands) throw new Error("Command is missing \"exec\" function.")
+            else {
+                if (!cmd.subcommands.size) throw new Error(`${cmd.name}: No subcommands.`)
+                let sub = Array.from(cmd.subcommands.values()).map(a => `> \`${a.name}\` — ${a.description ? a.description : "No Description."}`)
+                cmd.setExec(async function(ctx) {
+                    ctx.send(`\`🌺\` Subcommands | \`${cmd.name} (${cmd.subcommands.size})\`\n${sub.join("\n")}`)
+                })
+            }
+        }
         if (cmd.aliases) {
             if (new Set(cmd.aliases).size !== cmd.aliases.length) throw new Error("Command aliases already registered.")
         }
@@ -382,7 +399,6 @@ class Bot extends Eris.Client {
         if (!tempCmd.length) throw new Error("No command found.")
         if (!tempCmd.path) throw new Error("No path to reload from.")
         this.removeCommand(tempCmd.name)
-        
         try {
             this.addCommand(name, test)
         }
@@ -391,7 +407,13 @@ class Bot extends Eris.Client {
             throw e
         }
     }
-    getCommand(q) { return this.commands.get(q) || Array.from(this.commands.values()).filter((command) => command.aliases && command.aliases.includes(q)) }
+    getCommand(q) { 
+        q = q.split(" ")
+        let cmd = this.commands.get(q[0]) || Array.from(this.commands.values()).filter((command) => command.aliases && command.aliases.includes(q[0]))
+        if (!cmd) return null
+        if (q.length > 1 && cmd && cmd.subcommands) cmd = cmd.getSubcommand(q[1])
+        return cmd instanceof Array ? cmd[0] : cmd
+    }
     loadEvent(name, path) {
         const event = require(path)
         if (!event) throw new Error("No event found.")
@@ -402,7 +424,7 @@ class Bot extends Eris.Client {
         // delete require.cache[require.resolve()]
     }
     defaultHelp = new Command({ name: "help" })
-        .setArgs([{ name: "cm", type: "str" }])
+        .setArgs([{ name: "cm", type: "str", useRest: true }])
         .setExec(async function (ctx) {
             let cats
             if (!ctx.args.cm || ctx.args.cm === "undefined") {
@@ -412,27 +434,26 @@ class Bot extends Eris.Client {
                 await ctx.send(`\`🌺\` Categories\n${cats.join('\n')}\n\n> Get command or category help with \`${ctx.prefix}help [command or module name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${this.user.username}`))
             }
             else {
-                let command = this.getCommand(ctx.args.cm)
-                if (!command || command.length === 0) {
+                let cmd = this.getCommand(ctx.args.cm)
+                if (!cmd) {
                     let category = this.getCategory(ctx.args.cm)
                     if (category) {
                         let cmds = category.commands.map(x => {
-                            if (!x.hidden) return `> \`${x.name}\` - ${x.description ? x.description : "No Description."}`
+                            if (!x.hidden) return `> \`${x.name}\` — ${x.description ? x.description : "No Description."}`
                         })
                         if (!cmds.length) cmds.push("> No visible commands availible.")
                         return ctx.send(`\`🌺\` Category | ${category.name}\n${cmds.join('\n')}\n\n> Get command help with \`${ctx.prefix}help [command name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${this.user.username}`))
                     }
                     if (ctx.args.cm === 'no-category') {
                         let cmds = Array.from(this.commands.values()).filter((command) => !command.category).map((x) => {
-                            if (!x.hidden) return `> \`${x.name}\` - ${x.description ? x.description : "No Description."}`
+                            if (!x.hidden) return `> \`${x.name}\` — ${x.description ? x.description : "No Description."}`
                         })
                         if (!cmds.length) cmds.push("> No visible commands availible.")
                         return ctx.send(`\`🌺\` Category | no-category\n${cmds.join('\n')}\n\n> Get command help with \`${ctx.prefix}help [command name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${this.user.username}`))
                     }
                     return ctx.send(`\`❌\` No command or category found.`)
                 }
-                const cmd = command instanceof Array ? command[0] : command
-                return ctx.send(`\`🌺\` Command Help | \`${cmd.name}\`\n> Description: ${cmd.description ? cmd.description : "No Description."}\n> Usage: *\`${this.getHelp(ctx, cmd)}\`*${cmd.cooldown ? `\n> Cooldown: ${cmd.cooldown}ms` : ""}`)
+                return ctx.send(`\`🌺\` Command Help | \`${cmd.parent ? this.getCommand(cmd.parent).name+" "+cmd.name : cmd.name}\`\n> Description: ${cmd.description ? cmd.description : "No Description."}\n> Usage: \`${this.getHelp(ctx, cmd)}\`${cmd.cooldown ? `\n> Cooldown: ${cmd.cooldown}ms` : ""}${cmd.subcommands ? `\n> Subcommands: ${Array.from(cmd.subcommands.values()).map(a => a.name).join(", ")}` : ""}`)
             }
         })
 }

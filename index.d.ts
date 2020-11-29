@@ -2,7 +2,7 @@ import * as Eris from "eris"
 
 declare namespace Hibiscus {
     type F = (...args: any[]) => any
-    type commandExec = (ctx: CommandContext) => any
+    type commandExec = (ctx: CommandContext) => Promise<void>
     type checkExec = (ctx: CommandContext) => boolean
     class ExecutionError extends Error {
         original: typeof Error
@@ -26,6 +26,12 @@ declare namespace Hibiscus {
         useRest?: boolean
     }
 
+    interface HibiscusEvents<T> {
+        (event: "commandError", listener: (ctx: CommandContext, error: Error) => void): T
+        (event: "afterCommandExecute", listener: (ctx: CommandContext, timer: Date) => void): T
+        (event: "beforeCommandExecute" | "commandExecute", listener: (ctx: CommandContext) => void): T
+    }
+
     export class Bot extends Eris.Client {
         constructor(token: string, options: Eris.ClientOptions, hibiscusOptions: cmdOpts)
         commandOptions: cmdOpts
@@ -39,12 +45,13 @@ declare namespace Hibiscus {
         unloadCategory(name: string)
         reloadCategory(name: string)
         getCatgeory(name: string): Category
-        addCommand(cmd: Command)
+        addCommand(cmd: Command|Group)
         removeCommand(cmd: string)
         reloadCommand(cmd: string)
         getCommand(q: string): Command
         loadEvent(name: string, path: string)
         unloadEvent(name: string)
+        on: HibiscusEvents<this>
         defaultHelp: Command
     }
 
@@ -83,7 +90,7 @@ declare namespace Hibiscus {
         args?: ArgType
         aliases?: string[]
         hidden?: boolean
-        checks: F[]
+        checks: checkExec[]
         guildOnly?: boolean
         cooldown?: number
         path?: string
@@ -97,7 +104,28 @@ declare namespace Hibiscus {
         memberPerms(permissions: string[]): this
         constructor(opts: {
             name: string
-            exec?: F
+            exec?: commandExec
+            description?: string
+            args?: ArgType[]
+            aliases?: string[]
+            hidden?: boolean
+            checks?: checkExec[]
+            cooldown?: number
+            guildOnly?: boolean
+            path?: string
+            category?: string
+            parent?: string
+        })
+    }
+    
+    export class Group extends Command {
+        subcommands: Map<string, Command>
+        subCooldowns: Map<string, Map<string, number>>
+        addSubcommand(cmd: Command): this
+        getSubcommand(q: string): Command
+        constructor(opts: {
+            name: string
+            exec?: commandExec
             description?: string
             args?: ArgType[]
             aliases?: string[]
@@ -109,7 +137,7 @@ declare namespace Hibiscus {
             category?: string
         })
     }
-    
+
     export const Errors: {
         NoPrivate: typeof Error
         MissingBotPerms: typeof Error
