@@ -6,11 +6,11 @@ const
     mentionRegex = new RegExp("<@!?[0-9]{15,21}>$"),
     idRegex = new RegExp("([0-9]{15,21})$"),
     channelMentionRegex = new RegExp("<#[0-9]{15,21}>$"),
-    channelNameRegex = new RegExp(".{1,32}$"),
+    channelNameRegex = new RegExp(".{1,100}$"),
     emojiRegex = new RegExp("<a?:.+?:\d+>")
 
 
-class Converter {
+module.exports = {
     /**
      * Takes member-like query and returns a guild member.
      * Checking goes in the following order: ID > Mention > User Tag > Nickname > Username
@@ -26,7 +26,7 @@ class Converter {
         else if (q.match(nickRegex)) mem = ctx.guild.members.find(m => m.nick && q === m.nick)
         else if (q.match(nameRegex)) mem = ctx.guild.members.find(m => q === m.username)
         return mem
-    }
+    },
     /**
      * Takes user-like query and returns a user in client cache.
      * Checking goes in the following order: ID > Mention > User Tag > Username
@@ -40,7 +40,7 @@ class Converter {
         else if (q.match(tagRegex)) user = ctx.bot.users.find(u => q === `${u.username}#${u.discriminator}`)
         else if (q.match(nameRegex)) user = ctx.bot.users.find(u => q === u.username)
         return user
-    }
+    },
     /**
      * Takes channel-like query and returns a user in client cache.
      * Checking goes in the following order: ID > Mention > Name 
@@ -55,4 +55,3 @@ class Converter {
         return undefined
     }
 }
-module.exports = Converter

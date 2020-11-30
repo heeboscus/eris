@@ -1,12 +1,35 @@
-const { key } = require("eris-collector/src/classes/ReactionCollector")
-
+const CommandContext = require("./context.js")
 /**
  * Hibiscus Command Object.
+ * @typedef exec
+ * @type {(ctx: CommandContext) => void}
+ * 
+ * @typedef argument
+ * @type {object} 
+ * @property {string} argument.name
+ * @property {"str" | "num" | "member" | "user"} args.type
+ * @property {?boolean} args.required
+ * @property {?boolean} args.useRest
+ * 
+ * @typedef checkExec
+ * @type {(ctx: CommandContext) => boolean}
  */
 class Command {
     /**
      * Creates a command object.
-     * @param {{name: string, exec?: Function, description?: string, args: {name: string, type: ("str"|"num"|"member"|"user"), required?: boolean, useRest?: boolean}[], aliases?: string[], hidden?: boolean, checks?: Function[], cooldown?: number, guildOnly?: boolean, path?: string, category?: string, parent?: string}} opts Command options.
+     * @param {object} opts Command options.
+     * @param {string} opts.name
+     * @param {?exec} opts.exec 
+     * @param {?string} opts.description
+     * @param {?argument[]} opts.args
+     * @param {?string[]} opts.aliases
+     * @param {?boolean} opts.hidden
+     * @param {?checkExec[]} opts.checks
+     * @param {?number} opts.cooldown
+     * @param {?boolean} opts.guildOnly
+     * @param {?string} opts.path
+     * @param {?string} opts.category
+     * @param {?string} opts.parent
      */
     constructor(opts) {
         const { name, exec, description, args, aliases, hidden, checks, cooldown, guildOnly, path, category, parent } = opts
@@ -18,8 +41,8 @@ class Command {
          */
         this.name = name
         /**
-         * The code execute when the command is ran.
-         * @type {Function}
+         * The code to execute when the command is ran.
+         * @type {exec}
          */
         this.exec = exec
         /**
@@ -28,8 +51,8 @@ class Command {
          */
         this.description = description
         /**
-         * The arguments the user needs to put in.
-         * @type {{name: string, type: ("str"|"num"|"member"|"user"), required?: boolean, useRest?: boolean}[]}
+         * Sets the arguments for the command.
+         * @type {argument[]} 
          */
         this.args = args
         /**
@@ -44,11 +67,11 @@ class Command {
         this.hidden = hidden || false
         /**
          * Functions to run before executing the command.
-         * @type {Function[]}
+         * @type {checkExec[]}
          */
         this.checks = checks || []
         /**
-         * The amount of time until the command can be run again. This number must be in milliseconds.
+         * The amount of time until the command can be run again. The time is counted in milliseconds.
          * @type {number}
          */
         this.cooldown = cooldown
@@ -58,7 +81,7 @@ class Command {
          */
         this.guildOnly = guildOnly || false
         /**
-         * The path where this command came from. If this file is isolated from category or the client, use `__filename`.
+         * The path where this command came from. If this file is isolated from a category or the client, use `__filename`.
          * @type {string}
          */
         this.path = path
@@ -107,32 +130,77 @@ class Command {
     }
     /**
      * Sets the arguments for the command.
-     * @param {{name: string, type: ("str"|"num"), required?: boolean, useRest?: boolean}[]} args 
+     * @param {argument[]} args
      */
     setArgs(args) {
         this.args = args
         return this
     }
+    /**
+     * Sets the required bot permissions for executing a command.
+     * @param {string[]} permissions 
+     */
     botPerms(permissions) {
         this.neededBotPerms = permissions
         return this
     }
+    /**
+     * Sets the required user permissions for executing a command.
+     * @param {string[]} permissions 
+     */
     memberPerms(permissions) {
         this.neededMemberPerms = permissions
         return this
     }
 }
 
+/**
+ * Hibiscus Command Group Object.
+ */
 class Group extends Command {
+    /**
+     * Creates a command object.
+     * @param {object} opts Command options.
+     * @param {string} opts.name
+     * @param {?exec} opts.exec 
+     * @param {?string} opts.description
+     * @param {?argument[]} opts.args
+     * @param {?string[]} opts.aliases
+     * @param {?boolean} opts.hidden
+     * @param {?checkExec[]} opts.checks
+     * @param {?number} opts.cooldown
+     * @param {?boolean} opts.guildOnly
+     * @param {?string} opts.path
+     * @param {?string} opts.category
+     * @param {?string} opts.parent
+     */
     constructor(opts) {
         super(opts)
+        /**
+         * Group of subcommands.
+         * @type {Map<string, Command>}
+         */
         this.subcommands = new Map()
+        /**
+         * Group of subcommand cooldowns.
+         * @todo move subcommand cooldowns to other to base cooldowns.
+         * @type {Map<string, Map<string, number>>}
+         */
         this.subCooldowns = new Map()
     }
+    /**
+     * Gets a subcommand from the group.
+     * @param {string} q 
+     * @returns {Command}
+     */
     getSubcommand(q) { 
         let cmd = this.subcommands.get(q) || Array.from(this.subcommands.values()).filter((command) => command.aliases && command.aliases.includes(q)) 
         return cmd instanceof Array ? cmd[0] : cmd
     }
+    /**
+     * Adds a subcommand
+     * @param {Command} cmd 
+     */
     addSubcommand(cmd) {
         let check = this.getSubcommand(cmd.name)
         if (check) throw new Error(`${this.name}: Subcommand name/alias has already been registed.`)

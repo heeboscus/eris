@@ -7,12 +7,12 @@ declare namespace Hibiscus {
     class ExecutionError extends Error {
         original: typeof Error
     }
-    interface cmdOpts {
+    interface CmdOpts {
         prefix: string | string[] | ((m: Eris.Message) => string | string[] | Function)
         usePrefixSpaces?: boolean
         ownerID?: string | string[]
     }
-    interface paginatorOptions {
+    interface PaginatorOptions {
         pages: (object|string)[]
         type: "reaction" | "message"
         timeout: number
@@ -33,15 +33,15 @@ declare namespace Hibiscus {
     }
 
     export class Bot extends Eris.Client {
-        constructor(token: string, options: Eris.ClientOptions, hibiscusOptions: cmdOpts)
-        commandOptions: cmdOpts
+        constructor(token: string, options: Eris.ClientOptions, hibiscusOptions: CmdOpts)
+        commandOptions: CmdOpts
         commands: Map<string, Command>
         categories: Map<string, Category>
         cooldowns: Map<string, Map<string, number>>
         processCommands(msg: Eris.Message): Promise<void>
         getHelp(ctx: CommandContext, command?: Command): string
         loadCategory(category: Category)
-        paginator(ctx: CommandContext, options: paginatorOptions)
+        paginator(ctx: CommandContext, options: PaginatorOptions)
         unloadCategory(name: string)
         reloadCategory(name: string)
         getCatgeory(name: string): Category
@@ -51,7 +51,7 @@ declare namespace Hibiscus {
         getCommand(q: string): Command
         loadEvent(name: string, path: string)
         unloadEvent(name: string)
-        on: HibiscusEvents<this>
+        // on: TODO extend eris events somehow
         defaultHelp: Command
     }
 

@@ -6,32 +6,14 @@ const Errors = require("./errors")
 const { MessageCollector, ReactionCollector } = require("eris-collector")
 const errors = require("./errors")
 
-/**
-* Hibiscus Client.
-* @extends {Eris.Client} Credit for the original client goes to abalabahaha#9503 on discord.
-* @property {Eris.ClientOptions} options Eris Client Options.
-* @property {object} commandOptions Hibiscus Client Options.
-* @property {string|string[]|((m: Eris.Message) => string|string[]|Function)} commandOptions.prefix The prefix to use when looking for commands. Can be a string, an array of strings or a function returning a string or an array of strings.
-* @property {boolean} commandOptions.usePrefixSpaces Run commands with or without spaces at the end of prefix if true.
-* @property {string|boolean} commandOptions.ownerID User ID or array of user IDs that own this bot.
-*/
+
 class Bot extends Eris.Client {
-    /**
-     * Creates a Hibiscus Client.
-     * @param {string} token Discord Bot Token.
-     * @param {Eris.ClientOptions} options Eris Client Options.
-     * @param {{prefix: string|string[]|((m: Eris.Message) => string|string[]|Function), usePrefixSpaces?: boolean, ownerID?: string}} commandOptions Hibiscus Client Options.
-     */
     constructor(token, options, commandOptions) {
         super(token, options)
         if (!options) throw new Error("Hibiscus client is missing eris options.")
         options.restMode = true // need this regardless.
         if (!commandOptions) throw new Error("Hibiscus client is missing command options.")
         const { prefix, usePrefixSpaces, ownerID } = commandOptions
-        /**
-         * Hibiscus Client Options.
-         * @type {{prefix: string|string[]|((m: Eris.Message) => string|string[]|Function), usePrefixSpaces?: boolean, ownerID?: string}}
-         */
         this.commandOptions = {
             prefix: prefix,
             usePrefixSpaces: usePrefixSpaces || false,
@@ -101,7 +83,7 @@ class Bot extends Eris.Client {
             }
         }
         if (cmd.guildOnly && !msg.guildID) {
-            let err = new Errors.NoPrivate
+            let err = new Errors.NoPrivate("NO_PRIVATE")
             return this.emit("commandError", ctx, err)
         }
         if (cmd.neededBotPerms) {
@@ -109,7 +91,7 @@ class Bot extends Eris.Client {
                 let missingBotPerms = []
                 try {
                     for (let i = 0; i < cmd.neededBotPerms; i++) {
-                        if (!ctx.guild.me.permission.has(cmd.neededBotPerms[i])) throw new Errors.MissingBotPerms
+                        if (!ctx.guild.me.permission.has(cmd.neededBotPerms[i])) throw new Errors.MissingBotPerms("MISSING_BOT_PERMS")
                     }
                 }
                 catch (e) {
@@ -122,7 +104,7 @@ class Bot extends Eris.Client {
                 let missingMemberPerms = []
                 try {
                     for (let i = 0; i < cmd.neededMemberPerms; i++) {
-                        if (!ctx.author.permission.has(cmd.neededUserPerms[i])) throw new Errors.MissingMemberPerms
+                        if (!ctx.author.permission.has(cmd.neededUserPerms[i])) throw new Errors.MissingMemberPerms("MISSING_MEMBER_PERMS")
                     }
                 }
                 catch (e) {
@@ -167,8 +149,8 @@ class Bot extends Eris.Client {
             if (!cmd.args) return {}
             const properArgs = {}
             let requiredArgs = new Array(cmd.args).reduce((a, c) => a + c.required ? 1 : 0, 0)
-            if (args.length < requiredArgs) throw new Errors.MissingArguments
-            if (args.length > cmd.args.length && !cmd.args[cmd.args.length - 1].useRest) throw new Errors.InvalidArguments
+            if (args.length < requiredArgs) throw new Errors.MissingArguments("MISSING_ARGS")
+            if (args.length > cmd.args.length && !cmd.args[cmd.args.length - 1].useRest) throw new Errors.InvalidArguments("INVALID_ARGS")
             for (let i = 0; i < cmd.args.length; i++) {
                 let argg, argument = cmd.args[i], toUse = argument.useRest ? args.slice(i).join(" ") : args[i]
                 switch (argument.type) {
@@ -179,19 +161,19 @@ class Bot extends Eris.Client {
                         argg = Number(toUse)
                         break
                     case "member":
-                        try { argg = Converter.prototype.memberConverter(ctx, toUse) }
+                        try { argg = Converter.memberConverter(ctx, toUse) }
                         catch { argg = undefined }
                         break
                     case "user":
-                        try { argg = Converter.prototype.userConverter(ctx, toUse) }
+                        try { argg = Converter.userConverter(ctx, toUse) }
                         catch { argg = undefined }
                         break
                     case "channel":
-                        try { argg = Converter.prototype.channelConverter(ctx, toUse) }
+                        try { argg = Converter.channelConverter(ctx, toUse) }
                         catch { argg = undefined }
                         break
                 }
-                if (argument.required && (Number.isNaN(argg) || argg === "" || argg === "undefined" || ((argument.type === "member" || argument.type === "user") && !argg))) throw new Errors.InvalidArguments
+                if (argument.required && (Number.isNaN(argg) || argg === "" || argg === "undefined" || ((argument.type === "member" || argument.type === "user") && !argg))) throw new Errors.InvalidArguments("INVALID_ARGS")
                 properArgs[argument.name] = argg
                 if (argument.useRest) break
             }
@@ -225,7 +207,8 @@ class Bot extends Eris.Client {
             })
         }
         catch (e) {
-            let err = new Errors.ExecutionError(e.message, e.stack)
+            let err = new Errors.ExecutionError("EXEC_ERR")
+            err.original = e
             this.emit("commandError", ctx, err)
         }
     }
