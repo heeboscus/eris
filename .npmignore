@@ -3,3 +3,4 @@ scripts
 node_modules
 .eslintrc.js
 test.ts
+tsconfig.json

@@ -34,6 +34,16 @@ declare namespace Hibiscus {
         (event: "commandCooldown", listener: (ctx: CommandContext, left: number) => void): T
     }
     
+    export class ExtGuild extends Eris.Guild {
+        me: Eris.Member
+    }
+    export class ExtMember extends Eris.Member {
+        tag: string
+    }
+    export class ExtUser extends Eris.User {
+        tag: string
+    }
+
     export class Bot extends Eris.Client {
         constructor(token: string, options: Eris.ClientOptions, hibiscusOptions: CmdOpts)
         commandOptions: CmdOpts
@@ -80,9 +90,9 @@ declare namespace Hibiscus {
         prefix: string
         typing: Eris.Textable["sendTyping"]
         send: Eris.Textable["createMessage"]
-        author: Eris.Member | Eris.User
+        author: ExtMember | ExtUser
         channel: Eris.TextChannel
-        guild: Eris.Guild
+        guild: ExtGuild
     }
 
     export class Command {

@@ -3,7 +3,7 @@ const { version } = require('./package.json')
 require("./src/MonkeyPatch")
 
 function escapeRegex(str) {
-    return str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+    return str.replace(/[-[\]{}()*+?.,\\^$|#]/g, '\\$&')
 }
 
 const whenMentioned = function () { return [`<@${this.user.id}> `, `<@!${this.user.id}> `, `<@${this.user.id}>`, `<@!${this.user.id}>`] }

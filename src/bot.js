@@ -6,12 +6,14 @@ const Errors = require("./errors")
 const { MessageCollector, ReactionCollector } = require("eris-collector")
 const errors = require("./errors")
 
+function escapeRegex(str) {
+    return str.replace(/[-[\]{}()*+?.,\\^$|#]/g, '\\$&')
+}
 
 class Bot extends Eris.Client {
     constructor(token, options, commandOptions) {
         super(token, options)
         if (!options) throw new Error("Hibiscus client is missing eris options.")
-        options.restMode = true // need this regardless.
         if (!commandOptions) throw new Error("Hibiscus client is missing command options.")
         const { prefix, usePrefixSpaces, ownerID } = commandOptions
         this.commandOptions = {
@@ -33,6 +35,17 @@ class Bot extends Eris.Client {
                     ? this.commandOptions.prefix = this.commandOptions.prefix.bind(this)() : {}
             }
             catch { }
+            let pre = this.commandOptions.prefix
+            switch (typeof pre) {
+                case "string":
+                    this.commandOptions.prefix = escapeRegex(pre)
+                    break
+                case "object":
+                    this.commandOptions.prefix = pre.map(p => escapeRegex(p))
+                    break
+                default:
+                    break
+            }
         })
         this.on("messageCreate", async (m) => await this.processCommands(m))
     }
@@ -41,23 +54,23 @@ class Bot extends Eris.Client {
         let prefix, re, p
         switch (typeof this.commandOptions.prefix) {
             case 'string':
-                re = `(${this.commandOptions.prefix})`
+                re = `${this.commandOptions.prefix}`
                 break
             case 'object':
-                re = `${this.commandOptions.prefix.map(e => e.replace(/ /g, "\\s?").replace(/\?/g, "\?")).join("|")}`
+                re = `${this.commandOptions.prefix.map(e => e).join("|")}`
                 break
             case 'function':
                 let pre = await this.commandOptions.prefix.bind(this)(this, msg)
                 switch (typeof pre) {
                     case 'string':
-                        re = `(${pre})`
+                        re = `${pre}`
                         break
                     case 'function':
                         p = pre.bind(this)()
-                        re = `^(${typeof p === 'string' ? p : p.join('|')})`
+                        re = `^${typeof p === 'string' ? p : p.join('|')}`
                         break
                     case 'object':
-                        re = `${pre.map(e => e.replace(/ /g, "\\s?").replace(/\?/g, "\?")).join('|')}`
+                        re = `${pre.map(e => escapeRegex(e.replace(/ /g, "\\s?").replace(/\?/g, "\?"))).join('|')}`
                         break
                     default:
                         throw new Error(`Prefix function output must be string or object (array). Not ${typeof pre}.`)
@@ -314,9 +327,9 @@ class Bot extends Eris.Client {
 
     } 
     getHelp(ctx, command = undefined) {
-        let argList = new Array(), cmd, parent, parentStr
+        let argList = new Array(), cmd, parentCmd, parentStr
         cmd = command ? command : ctx.invokedSubcommand ? ctx.invokedSubcommand : ctx.command
-        if (cmd.parent) parent = this.getCommand(cmd.parent)
+        if (cmd.parent) parentCmd = this.getCommand(cmd.parent)
         parentStr = parent ? parent.aliases.length ? `[${parent.name}|${parent.aliases.join('|')} ` : parent.name+" " :  ""
         let usage = cmd.aliases.length ? ctx.prefix + `${parentStr}[${cmd.name}|${cmd.aliases.join('|')}]` : ctx.prefix + parentStr + cmd.name
         if (!cmd.args) return usage
@@ -414,7 +427,7 @@ class Bot extends Eris.Client {
                 let non = Array.from(this.commands.values()).filter((command) => !command.category)
                 cats = Array.from(this.categories.values()).map((x) => `> ${x.name} (${x.commands.length} Command${x.commands.length === 1 ? "" : 's'})`)
                 if (non.length) cats.push(`> no-category (${non.length} Command${non.length === 1 ? "" : 's'})`)
-                await ctx.send(`\`🌺\` Categories\n${cats.join('\n')}\n\n> Get command or category help with \`${ctx.prefix}help [command or module name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${this.user.username}`))
+                await ctx.send(`\`🌺\` Categories\n${cats.join('\n')}\n\n> Get command or category help with \`${ctx.prefix}help [command or module name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${ctx.guild ? ctx.guild.me.nick ? ctx.guild.me.nick : this.user.username : this.user.username}`))
             }
             else {
                 let cmd = this.getCommand(ctx.args.cm)
@@ -425,14 +438,14 @@ class Bot extends Eris.Client {
                             if (!x.hidden) return `> \`${x.name}\` — ${x.description ? x.description : "No Description."}`
                         })
                         if (!cmds.length) cmds.push("> No visible commands availible.")
-                        return ctx.send(`\`🌺\` Category | ${category.name}\n${cmds.join('\n')}\n\n> Get command help with \`${ctx.prefix}help [command name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${this.user.username}`))
+                        return ctx.send(`\`🌺\` Category | ${category.name}\n${cmds.join('\n')}\n\n> Get command help with \`${ctx.prefix}help [command name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${ctx.guild ? ctx.guild.me.nick ? ctx.guild.me.nick : this.user.username : this.user.username}`))
                     }
                     if (ctx.args.cm === 'no-category') {
                         let cmds = Array.from(this.commands.values()).filter((command) => !command.category).map((x) => {
                             if (!x.hidden) return `> \`${x.name}\` — ${x.description ? x.description : "No Description."}`
                         })
                         if (!cmds.length) cmds.push("> No visible commands availible.")
-                        return ctx.send(`\`🌺\` Category | no-category\n${cmds.join('\n')}\n\n> Get command help with \`${ctx.prefix}help [command name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${this.user.username}`))
+                        return ctx.send(`\`🌺\` Category | no-category\n${cmds.join('\n')}\n\n> Get command help with \`${ctx.prefix}help [command name]\``.replace(new RegExp(`<@!?${this.user.id}>`, "g"), `@${ctx.guild ? ctx.guild.me.nick ? ctx.guild.me.nick : this.user.username : this.user.username}`))
                     }
                     return ctx.send(`\`❌\` No command or category found.`)
                 }
