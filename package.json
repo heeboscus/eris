@@ -1,6 +1,6 @@
 {
   "name": "@skullbite/hibiscus",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Command Handler for Eris",
   "main": "index.js",
   "scripts": {
@@ -10,8 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "eris": "^0.13.4",
-    "eris-collector": "^1.0.1",
-    "phin": "^3.5.1"
+    "eris-collector": "^1.0.1"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.6.1",
@@ -20,14 +19,15 @@
   },
   "keywords": [
     "discord",
-    "eris"
+    "eris",
+    "command-handler"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hibiscus-discord/hibiscus.git"
+    "url": "git+https://github.com/heeboscus/hibiscus.git"
   },
   "bugs": {
-    "url": "https://github.com/hibiscus-discord/hibiscus/issues"
+    "url": "https://github.com/heeboscus/hibiscus/issues"
   },
-  "homepage": "https://github.com/hibiscus-discord/hibiscus#readme"
+  "homepage": "https://github.com/heeboscus/hibiscus#readme"
 }
