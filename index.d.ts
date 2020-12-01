@@ -2,7 +2,7 @@ import * as Eris from "eris"
 
 declare namespace Hibiscus {
     type F = (...args: any[]) => any
-    type commandExec = (ctx: CommandContext) => Promise<void>
+    type commandExec = (ctx: CommandContext) => Promise<any>
     type checkExec = (ctx: CommandContext) => boolean
     class ExecutionError extends Error {
         original: typeof Error
@@ -25,13 +25,15 @@ declare namespace Hibiscus {
         required?: boolean
         useRest?: boolean
     }
-
-    interface HibiscusEvents<T> {
+    
+    
+    interface HibiscusEvents<T> extends Eris.ClientEvents<T> {
         (event: "commandError", listener: (ctx: CommandContext, error: Error) => void): T
         (event: "afterCommandExecute", listener: (ctx: CommandContext, timer: Date) => void): T
         (event: "beforeCommandExecute" | "commandExecute", listener: (ctx: CommandContext) => void): T
+        (event: "commandCooldown", listener: (ctx: CommandContext, left: number) => void): T
     }
-
+    
     export class Bot extends Eris.Client {
         constructor(token: string, options: Eris.ClientOptions, hibiscusOptions: CmdOpts)
         commandOptions: CmdOpts
@@ -51,7 +53,7 @@ declare namespace Hibiscus {
         getCommand(q: string): Command
         loadEvent(name: string, path: string)
         unloadEvent(name: string)
-        // on: TODO extend eris events somehow
+        on: HibiscusEvents<this>
         defaultHelp: Command
     }
 
