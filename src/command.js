@@ -2,17 +2,15 @@ const CommandContext = require("./context.js")
 /**
  * Hibiscus Command Object.
  * @typedef exec
- * @type {(ctx: CommandContext) => void}
- * 
+ * @type {Function}
  * @typedef argument
  * @type {object} 
  * @property {string} argument.name
  * @property {"str" | "num" | "member" | "user"} args.type
  * @property {?boolean} args.required
  * @property {?boolean} args.useRest
- * 
  * @typedef checkExec
- * @type {(ctx: CommandContext) => boolean}
+ * @type {Function}
  */
 class Command {
     /**

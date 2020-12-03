@@ -1,6 +1,10 @@
-const { Command, Group } = require("./command.js")
 /**
  * Hibiscus Command Category Object.
+ * @typedef Command
+ * @type {import("./command.js").Command}
+ * 
+ * @typedef Group
+ * @type {import("./command.js").Group}
  */
 class Category {
     /**
@@ -8,7 +12,7 @@ class Category {
      * @param {object} opts 
      * @param {string} opts.name
      * @param {(Command|Group)[]} opts.commands
-     * @param {import("./command.js").checkExec[]} opts.globalChecks
+     * @param {Function} opts.globalChecks
      * @param {string} opts.path
      */
     constructor(opts) {
@@ -23,12 +27,12 @@ class Category {
         this.name = name
         /**
          * Commands and/or groups in category.
-         * @type {(Command|Group)[]}
+         * @type {Command|Group)[]}
          */
         this.commands = commands || []
         /**
          * All checks for any command execution within category.
-         * @type {import("./command.js").checkExec}
+         * @type {Function[]}
          */
         this.globalChecks = globalChecks || []
         /**
@@ -49,7 +53,7 @@ class Category {
     }
     /**
      * Sets the global checks for the category.
-     * @param {import("./command.js").checkExec[]} checks 
+     * @param {Function} checks 
      */
     setChecks(checks) {
         this.globalChecks = checks

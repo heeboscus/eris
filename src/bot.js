@@ -347,7 +347,7 @@ class Bot extends Eris.Client {
         const category = this.getCategory(name)
         if (!category) return
         category.commands.map(a => {
-            this.command.delete(a.name)
+            this.commands.delete(a.name)
         })
         this.categories.delete(name)
         if (category.path) delete require.cache[require.resolve(category.path)]
