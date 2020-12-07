@@ -221,7 +221,7 @@ class Bot extends Eris.Client {
         }
         catch (e) {
             let err = new Errors.ExecutionError("EXEC_ERR")
-            err.original = e
+            err.orginal = e
             this.emit("commandError", ctx, err)
         }
     }
@@ -230,7 +230,7 @@ class Bot extends Eris.Client {
             // allSameType = (arr) => new Set(arr.map((x) => typeof x)).size <= 1,
             currentPage = 0,
             bot = (ID) => {
-                let u = Converter.prototype.userConverter(ctx, ID)
+                let u = Converter.userConverter(ctx, ID)
                 return u ? u.bot : false
             }
         let opts = {
@@ -330,7 +330,7 @@ class Bot extends Eris.Client {
         let argList = new Array(), cmd, parentCmd, parentStr
         cmd = command ? command : ctx.invokedSubcommand ? ctx.invokedSubcommand : ctx.command
         if (cmd.parent) parentCmd = this.getCommand(cmd.parent)
-        parentStr = parent ? parent.aliases.length ? `[${parent.name}|${parent.aliases.join('|')} ` : parent.name+" " :  ""
+        parentStr = parentCmd ? parent.aliases.length ? `[${parent.name}|${parent.aliases.join('|')} ` : parent.name+" " :  ""
         let usage = cmd.aliases.length ? ctx.prefix + `${parentStr}[${cmd.name}|${cmd.aliases.join('|')}]` : ctx.prefix + parentStr + cmd.name
         if (!cmd.args) return usage
         cmd.args.map(a => {

@@ -2,10 +2,10 @@ import * as Eris from "eris"
 
 declare namespace Hibiscus {
     type F = (...args: any[]) => any
-    type commandExec = (ctx: CommandContext) => Promise<any>
-    type checkExec = (ctx: CommandContext) => boolean
+    export function commandExec(this: Bot, ctx: CommandContext): Promise<any>
+    export function checkExec(this: Bot, ctx: CommandContext): Boolean
     class ExecutionError extends Error {
-        original: typeof Error
+        original: Error
     }
     interface CmdOpts {
         prefix: string | string[] | ((m: Eris.Message) => string | string[] | Function)
@@ -70,14 +70,14 @@ declare namespace Hibiscus {
     export class Category {
         name: string
         commands: Command[]
-        globalChecks?: checkExec[]
+        globalChecks?: typeof checkExec[]
         path?: string
         addCommand(command: Command): this
-        setChecks(checks: checkExec[]): this
+        setChecks(checks: typeof checkExec[]): this
         constructor(opts: {
             name: string
             commands?: Command[]
-            globalChecks?: checkExec[]
+            globalChecks?: typeof checkExec[]
             path?: string
         })
     }
@@ -97,31 +97,31 @@ declare namespace Hibiscus {
 
     export class Command {
         name: string
-        exec: commandExec
+        exec: typeof commandExec
         description?: string
         args?: ArgType
         aliases?: string[]
         hidden?: boolean
-        checks: checkExec[]
+        checks: typeof checkExec[]
         guildOnly?: boolean
         cooldown?: number
         path?: string
         category?: string
-        setExec(exec: commandExec): this
+        setExec(exec: typeof commandExec): this
         setAliases(aliases: string[]): this
-        addCheck(check: checkExec): this
+        addCheck(check: typeof checkExec): this
         setCooldown(time: number): this
         setArgs(args: ArgType[]): this
         botPerms(permissions: string[]): this
         memberPerms(permissions: string[]): this
         constructor(opts: {
             name: string
-            exec?: commandExec
+            exec?: typeof commandExec
             description?: string
             args?: ArgType[]
             aliases?: string[]
             hidden?: boolean
-            checks?: checkExec[]
+            checks?: typeof checkExec[]
             cooldown?: number
             guildOnly?: boolean
             path?: string
@@ -137,12 +137,12 @@ declare namespace Hibiscus {
         getSubcommand(q: string): Command
         constructor(opts: {
             name: string
-            exec?: commandExec
+            exec?: typeof commandExec
             description?: string
             args?: ArgType[]
             aliases?: string[]
             hidden?: boolean
-            checks?: checkExec[]
+            checks?: typeof checkExec[]
             cooldown?: number
             guildOnly?: boolean
             path?: string
@@ -183,7 +183,7 @@ declare namespace Hibiscus {
     export function whenMentionedOr(basePrefix: string|string[]): typeof whenMentioned
     export const VERSION: string
     export const Utils: { duration(date1: number, date2: number): string }
-    export const Checks: { isOwner: checkExec }
+    export const Checks: { isOwner: typeof checkExec }
 }
 
 export = Hibiscus
